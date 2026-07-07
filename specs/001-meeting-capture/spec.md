@@ -85,7 +85,7 @@ At any time the user can press a status hotkey to hear whether a session is runn
 - **Capture folder or notes destination is missing**: The tool should create the needed folder rather than fail.
 - **A hotkey the user configured is already claimed by another application**: The tool should report, by speech, that a hotkey could not be registered rather than starting in a silently broken state.
 - **Malformed or partially edited configuration file**: The tool should fall back to defaults for any unreadable value and speak a warning, rather than refusing to start.
-- **Save hotkey pressed when the browser/AI response was never copied**: Treated as the empty-clipboard case — spoken notice, no file written.
+- **Save hotkey pressed when the browser/AI response was never copied**: After handoff the clipboard still holds the summarisation prompt the tool placed there, so the clipboard is NOT empty. The tool MUST recognise its own prompt still sitting on the clipboard and, instead of saving it as notes, speak a reminder to copy Copilot's response first — it MUST NOT write the prompt out as a meeting-notes file.
 - **Very long session producing hundreds of screenshots**: The tool should continue capturing and counting without degraded responsiveness of the hotkeys or speech.
 - **Only one monitor of a multi-monitor setup is captured**: Multi-monitor is out of scope for v1; the tool captures the primary screen and this limitation is understood.
 
@@ -125,6 +125,7 @@ At any time the user can press a status hotkey to hear whether a session is runn
 - **FR-019**: On the save hotkey the tool MUST read the current clipboard text and, if non-empty, write it to a notes file whose name includes the current date and time.
 - **FR-020**: After writing, the tool MUST open the notes file in a plain-text editor and speak a confirmation that notes are saved and open.
 - **FR-021**: If the clipboard has no text, the tool MUST speak that there is nothing to save and MUST NOT create an empty file.
+- **FR-027**: The tool MUST remember the summarisation prompt it last placed on the clipboard during handoff; if the save hotkey is pressed while the clipboard still contains exactly that prompt, the tool MUST NOT save it, and MUST instead speak a reminder to copy Copilot's response first.
 
 #### Configuration
 - **FR-022**: The tool MUST read all hotkeys and the capture interval from a plain-text configuration file that a screen reader can read and edit.

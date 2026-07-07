@@ -88,7 +88,7 @@ Single-project desktop app: source in `src/meetinglens/`, tests in `tests/unit/`
 - [ ] T026 [P] [US2] Unit test prompt builder in `tests/unit/test_prompt.py` (asserts count, interval, ordered per-screen request, required content) per `contracts/prompt-template.md` — write to FAIL
 - [ ] T027 [US2] Implement `build_summarisation_prompt(count, interval)` in `src/meetinglens/prompt.py` (depends on T026)
 - [ ] T028 [P] [US2] Unit test handoff sequence in `tests/unit/test_handoff.py` (clipboard written, launcher opens URL + folder, spoken order STOPPING→HANDOFF_OPEN→HANDOFF_READY) — write to FAIL
-- [ ] T029 [US2] Implement `Handoff` in `src/meetinglens/handoff.py`: write prompt to clipboard, open `ai_chat_url` + captures folder via launcher, enqueue `HANDOFF_OPEN`/`HANDOFF_READY` (depends on T027, T028)
+- [ ] T029 [US2] Implement `Handoff` in `src/meetinglens/handoff.py`: write prompt to clipboard, retain the exact prompt string as `AppController.last_handoff_prompt` (FR-027, feeds US3 save guard), open `ai_chat_url` + captures folder via launcher, enqueue `HANDOFF_OPEN`/`HANDOFF_READY` (depends on T027, T028)
 - [ ] T030 [US2] Extend **stop** action in `src/meetinglens/app.py` to invoke `Handoff` after `STOPPING` (FR-015–FR-018) (depends on T023, T029)
 - [ ] T031 [P] [US2] Integration test handoff in `tests/integration/test_handoff.py` (clipboard round-trip of real prompt; launcher invoked for URL + folder)
 
@@ -100,12 +100,12 @@ Single-project desktop app: source in `src/meetinglens/`, tests in `tests/unit/`
 
 **Goal**: On the save hotkey, write clipboard text to a timestamped notes file and open it in Notepad; do nothing (but speak) if the clipboard is empty.
 
-**Independent Test**: Copy text, press `Ctrl+Alt+W` → timestamped `MeetingNotes_*.txt` on Desktop, opened in Notepad, `NOTES_SAVED` spoken. Clear clipboard, press again → `NOTHING_TO_SAVE`, no file.
+**Independent Test**: Copy text, press `Ctrl+Alt+W` → timestamped `MeetingNotes_*.txt` on Desktop, opened in Notepad, `NOTES_SAVED` spoken. Clear clipboard, press again → `NOTHING_TO_SAVE`, no file. Immediately after a handoff (clipboard still holds the prompt), press `Ctrl+Alt+W` → `PROMPT_NOT_COPIED`, no file.
 
-- [ ] T032 [P] [US3] Unit test notes module in `tests/unit/test_notes.py` (timestamped filename format, empty-clipboard → no file, non-overwrite) per `data-model.md` — write to FAIL
-- [ ] T033 [US3] Implement `save_notes` in `src/meetinglens/notes.py`: read clipboard, if non-empty write `MeetingNotes_YYYY-MM-DD_HH-mm.txt` to notes folder, open in Notepad (depends on T032) (FR-019, FR-020)
-- [ ] T034 [US3] Wire **save** action in `src/meetinglens/app.py` (non-empty→`NOTES_SAVED`; empty→`NOTHING_TO_SAVE`, no file; works in any session state) (FR-021)
-- [ ] T035 [P] [US3] Integration test save-notes in `tests/integration/test_notes.py` (real file written with clipboard text and opened; empty clipboard writes nothing)
+- [ ] T032 [P] [US3] Unit test notes module in `tests/unit/test_notes.py` (timestamped filename format, empty-clipboard → no file, non-overwrite, **clipboard equals last handoff prompt → no file**) per `data-model.md` — write to FAIL
+- [ ] T033 [US3] Implement `save_notes(clipboard_text, last_handoff_prompt)` in `src/meetinglens/notes.py`: if text non-empty AND not equal to `last_handoff_prompt`, write `MeetingNotes_YYYY-MM-DD_HH-mm.txt` to notes folder and open in Notepad; otherwise write nothing (depends on T032) (FR-019, FR-020, FR-027)
+- [ ] T034 [US3] Wire **save** action in `src/meetinglens/app.py` passing `AppController.last_handoff_prompt` to `save_notes` (non-empty & not prompt→`NOTES_SAVED`; empty→`NOTHING_TO_SAVE`; equals prompt→`PROMPT_NOT_COPIED`; no file in the latter two; works in any session state) (FR-021, FR-027)
+- [ ] T035 [P] [US3] Integration test save-notes in `tests/integration/test_notes.py` (real file written with clipboard text and opened; empty clipboard writes nothing; clipboard holding the retained prompt writes nothing and speaks `PROMPT_NOT_COPIED`)
 
 **Checkpoint**: US1–US3 independently functional; full capture-to-notes loop closes.
 
@@ -137,6 +137,8 @@ Single-project desktop app: source in `src/meetinglens/`, tests in `tests/unit/`
 - [ ] T044 Audit Article IV compliance across `src/meetinglens/` (file-purpose comments, doc comments on public functions, functions <40 lines, no magic numbers)
 - [ ] T045 [P] Robustness pass: long-session responsiveness (hundreds of screenshots), locked-screen skip verification, folder auto-create for both captures and notes (FR-024, FR-025)
 - [ ] T046 Run `quickstart.md` end-to-end validation for all four stories and record evidence (Article X)
+- [ ] T047 [P] Verification test for **SC-002** (speech latency) in `tests/integration/test_latency.py`: assert every state-change message is enqueued and begins speaking within 2 seconds of its trigger under an active session
+- [ ] T048 [P] Verification test for **SC-003** (hotkey reliability) in `tests/integration/test_hotkey_reliability.py`: with a foreground app holding keyboard focus, fire each global hotkey many times and assert ≥99% are handled
 
 ---
 

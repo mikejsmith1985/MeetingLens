@@ -74,7 +74,8 @@ Composed on stop from the just-ended session; written to the clipboard, never pe
 | interval | `Config.interval_seconds` |
 
 - **Content rules (FR-016)**: states the exact count and interval; requests an ordered, per-screen description including all visible text, bullet points, chart descriptions, names, dates, and action items; ends by asking for key takeaways and action items with owners. Full template lives in `contracts/prompt-template.md`.
-- **Source of truth**: FR-016, SC-005, spec Key Entities "Summarisation Prompt".
+- **Retention (FR-027)**: the exact prompt text written to the clipboard is retained by the `AppController` as `last_handoff_prompt` so the save action can detect the prompt still sitting on the clipboard and refuse to save it as notes.
+- **Source of truth**: FR-016, FR-027, SC-005, spec Key Entities "Summarisation Prompt".
 
 ## Entity: MeetingNotesFile
 
@@ -85,7 +86,7 @@ Written by the save action from clipboard text.
 | Name | `MeetingNotes_YYYY-MM-DD_HH-mm.txt` (local time) |
 | Location | `Config.notes_folder` (Desktop) |
 | Content | verbatim clipboard text |
-| Precondition | clipboard text non-empty (FR-021) — empty ⇒ no file, spoken notice |
+| Precondition | clipboard text non-empty (FR-021) **and** not equal to the last handoff prompt (FR-027) — empty ⇒ spoken "nothing to save"; equals prompt ⇒ spoken "copy the response first"; neither writes a file |
 | Post-action | opened in Notepad, spoken confirmation (FR-020) |
 
 - **Invariant**: timestamped names never overwrite prior saves (spec Assumption).
