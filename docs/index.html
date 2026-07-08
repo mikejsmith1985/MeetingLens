@@ -75,6 +75,13 @@
     </ol>
   </div>
 
+  <div class="card" id="promptCard" style="display:none">
+    <h2 style="margin-top:0;font-size:1.2rem">Your Copilot prompt</h2>
+    <p style="margin-top:0">This was copied to your clipboard automatically. If pasting doesn't work,
+      click in the box below, press <kbd>Ctrl</kbd>+<kbd>A</kbd> then <kbd>Ctrl</kbd>+<kbd>C</kbd> to copy it.</p>
+    <textarea id="promptBox" readonly aria-label="Your Copilot prompt to paste"></textarea>
+  </div>
+
   <div class="card">
     <h2 style="margin-top:0;font-size:1.2rem">Save Copilot's answer as notes</h2>
     <label for="notes">Paste Copilot's summary here, then press Save.</label>
@@ -97,6 +104,8 @@
   const intervalInput = document.getElementById("interval");
   const notes = document.getElementById("notes");
   const saveBtn = document.getElementById("saveBtn");
+  const promptCard = document.getElementById("promptCard");
+  const promptBox = document.getElementById("promptBox");
   const video = document.getElementById("preview");
   const canvas = document.getElementById("canvas");
 
@@ -180,6 +189,24 @@
       "key takeaways and any action items with owners.";
   }
 
+  // Copy text to the clipboard, with a legacy fallback for file:// where the async API may fail.
+  async function copyText(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (e) { /* fall through to legacy path */ }
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      const ok = document.execCommand("copy");
+      ta.remove();
+      return ok;
+    } catch (e) { return false; }
+  }
+
   function downloadBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -198,7 +225,9 @@
     announce("Stopping capture. " + count + " screenshots taken. Preparing your summary.");
 
     const prompt = buildPrompt(count, secs);
-    try { await navigator.clipboard.writeText(prompt); } catch (e) { /* clipboard may need focus */ }
+    promptBox.value = prompt;
+    promptCard.style.display = "block";   // always show it as a manual-copy fallback
+    await copyText(prompt);
 
     // Download each screenshot (browser asks once to allow multiple downloads).
     shots.forEach((s, i) => setTimeout(() => downloadBlob(s.blob, s.name), i * 250));
