@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MeetingLens — Accessible Meeting Capture</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, "Segoe UI", Arial, sans-serif;
+    font-size: 20px; line-height: 1.5; margin: 0; padding: 1.5rem;
+    max-width: 780px; margin-inline: auto;
+    background: #ffffff; color: #111827;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0b1220; color: #e5e7eb; }
+    .card { background: #111a2e; border-color: #24324d; }
+    button { background: #1d4ed8; }
+    button.stop { background: #b91c1c; }
+    input, textarea { background: #0b1220; color: #e5e7eb; border-color: #33415c; }
+    a { color: #93c5fd; }
+  }
+  h1 { font-size: 1.8rem; margin: 0 0 .25rem; }
+  p.lead { margin-top: 0; opacity: .85; }
+  .card { border: 2px solid #d1d5db; border-radius: 12px; padding: 1rem 1.25rem; margin: 1rem 0; }
+  .status {
+    font-size: 1.4rem; font-weight: 700; padding: 1rem; border-radius: 10px;
+    background: #eff6ff; border: 2px solid #bfdbfe; margin-bottom: 1rem;
+  }
+  @media (prefers-color-scheme: dark) { .status { background: #0f2547; border-color: #1e3a8a; } }
+  .row { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; }
+  button {
+    font-size: 1.15rem; font-weight: 700; padding: .75rem 1.25rem; border: none;
+    border-radius: 10px; background: #1d4ed8; color: #fff; cursor: pointer; min-width: 12rem;
+  }
+  button.stop { background: #dc2626; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible {
+    outline: 4px solid #f59e0b; outline-offset: 2px;
+  }
+  label { font-weight: 600; display: block; margin-bottom: .25rem; }
+  input[type=number] { font-size: 1.1rem; padding: .5rem; width: 6rem; border: 2px solid #cbd5e1; border-radius: 8px; }
+  textarea { width: 100%; min-height: 8rem; font-size: 1.05rem; padding: .6rem; border: 2px solid #cbd5e1; border-radius: 8px; }
+  kbd { background: #374151; color: #fff; border-radius: 5px; padding: .1rem .4rem; font-size: .9rem; }
+  ol { padding-left: 1.4rem; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+</head>
+<body>
+  <h1>MeetingLens</h1>
+  <p class="lead">Capture a meeting's slides and shared screens, then get a screen-reader-friendly summary from Copilot. Everything is spoken aloud. Works entirely in your browser — nothing to install.</p>
+
+  <!-- Spoken + screen-reader status. aria-live announces it; we also speak it aloud. -->
+  <div id="status" class="status" role="status" aria-live="assertive">Ready. Press Start capture to begin.</div>
+
+  <div class="card">
+    <div class="row">
+      <button id="startBtn" type="button">▶ Start capture <span class="visually-hidden">(shortcut S)</span></button>
+      <button id="stopBtn" type="button" class="stop" disabled>■ Stop &amp; make summary <span class="visually-hidden">(shortcut X)</span></button>
+      <button id="statusBtn" type="button">🔊 Speak status <span class="visually-hidden">(shortcut R)</span></button>
+    </div>
+    <p style="margin:.75rem 0 0"><label for="interval">Seconds between screenshots</label>
+      <input id="interval" type="number" min="5" max="600" value="45" /></p>
+    <p style="font-size:.95rem;opacity:.8;margin:.5rem 0 0">When this tab is focused you can also press <kbd>S</kbd> start, <kbd>X</kbd> stop, <kbd>R</kbd> status.</p>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0;font-size:1.2rem">How to use it</h2>
+    <ol>
+      <li>Press <strong>Start capture</strong>. Your browser asks what to share — choose <strong>Entire Screen</strong>, then <strong>Share</strong>.</li>
+      <li>Go to your meeting as normal. MeetingLens keeps taking screenshots on its own and says each one aloud.</li>
+      <li>When the meeting ends, come back to this tab and press <strong>Stop &amp; make summary</strong>.</li>
+      <li>Your screenshots download to your Downloads folder, the prompt is copied to your clipboard, and Copilot opens in a new tab. Paste the prompt, attach the screenshots, and read Copilot's summary.</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0;font-size:1.2rem">Save Copilot's answer as notes</h2>
+    <label for="notes">Paste Copilot's summary here, then press Save.</label>
+    <textarea id="notes" placeholder="Paste the summary from Copilot here..."></textarea>
+    <p style="margin:.6rem 0 0"><button id="saveBtn" type="button">💾 Save notes to a file</button></p>
+  </div>
+
+  <video id="preview" playsinline muted style="display:none"></video>
+  <canvas id="canvas" style="display:none"></canvas>
+
+<script>
+(() => {
+  "use strict";
+  const COPILOT_URL = "https://copilot.microsoft.com";
+
+  const statusEl = document.getElementById("status");
+  const startBtn = document.getElementById("startBtn");
+  const stopBtn = document.getElementById("stopBtn");
+  const statusBtn = document.getElementById("statusBtn");
+  const intervalInput = document.getElementById("interval");
+  const notes = document.getElementById("notes");
+  const saveBtn = document.getElementById("saveBtn");
+  const video = document.getElementById("preview");
+  const canvas = document.getElementById("canvas");
+
+  let stream = null;
+  let timer = null;
+  let count = 0;
+  let startedAt = 0;
+  let shots = [];        // { name, blob }
+  let keepAlive = null;  // AudioContext to keep the background tab awake
+
+  // Speak a message aloud (works with or without a screen reader) and show it visibly.
+  function announce(text) {
+    statusEl.textContent = text;
+    try {
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 1.0;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+    } catch (e) { /* speech optional */ }
+  }
+
+  function intervalMs() {
+    const n = parseInt(intervalInput.value, 10);
+    return (Number.isFinite(n) && n >= 5 ? n : 45) * 1000;
+  }
+
+  // A silent oscillator keeps the tab from being throttled/frozen while in the background.
+  function startKeepAlive() {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      keepAlive = new Ctx();
+      const osc = keepAlive.createOscillator();
+      const gain = keepAlive.createGain();
+      gain.gain.value = 0.0001; // effectively silent
+      osc.connect(gain); gain.connect(keepAlive.destination);
+      osc.start();
+    } catch (e) { /* best effort */ }
+  }
+  function stopKeepAlive() { if (keepAlive) { keepAlive.close(); keepAlive = null; } }
+
+  function captureFrame() {
+    if (!stream) return;
+    const w = video.videoWidth, h = video.videoHeight;
+    if (!w || !h) return; // frame not ready; skip, session continues
+    canvas.width = w; canvas.height = h;
+    canvas.getContext("2d").drawImage(video, 0, 0, w, h);
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      count += 1;
+      const name = "capture_" + String(count).padStart(3, "0") + ".png";
+      shots.push({ name, blob });
+      announce("Screenshot " + count + " taken.");
+    }, "image/png");
+  }
+
+  async function start() {
+    if (stream) { announce("Already recording. " + count + " screenshots taken so far."); return; }
+    try {
+      stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 1 }, audio: false });
+    } catch (e) {
+      announce("Screen sharing was not started. Press Start capture and choose Entire Screen.");
+      return;
+    }
+    video.srcObject = stream;
+    await video.play().catch(() => {});
+    // If the user stops sharing via the browser bar, end the session cleanly.
+    stream.getVideoTracks()[0].addEventListener("ended", () => { if (stream) stop(); });
+    count = 0; shots = []; startedAt = Date.now();
+    startBtn.disabled = true; stopBtn.disabled = false;
+    startKeepAlive();
+    timer = setInterval(captureFrame, intervalMs());
+    announce("Meeting capture started. 0 screenshots taken so far.");
+  }
+
+  function buildPrompt(n, secs) {
+    const noun = n === 1 ? "screenshot" : "screenshots";
+    return "I'm attaching " + n + " " + noun + " taken every " + secs +
+      " seconds during a meeting. My colleague is blind and this is her only record of what was " +
+      "shown visually. Please describe each distinct slide or screen in order, including all visible " +
+      "text, bullet points, chart descriptions, names, dates, and action items. End with a summary of " +
+      "key takeaways and any action items with owners.";
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }
+
+  async function stop() {
+    if (!stream) { announce("Nothing is being recorded."); return; }
+    clearInterval(timer); timer = null;
+    stream.getTracks().forEach((t) => t.stop()); stream = null;
+    stopKeepAlive();
+    startBtn.disabled = false; stopBtn.disabled = true;
+    const secs = Math.round(intervalMs() / 1000);
+    announce("Stopping capture. " + count + " screenshots taken. Preparing your summary.");
+
+    const prompt = buildPrompt(count, secs);
+    try { await navigator.clipboard.writeText(prompt); } catch (e) { /* clipboard may need focus */ }
+
+    // Download each screenshot (browser asks once to allow multiple downloads).
+    shots.forEach((s, i) => setTimeout(() => downloadBlob(s.blob, s.name), i * 250));
+
+    window.open(COPILOT_URL, "_blank", "noopener");
+    setTimeout(() => announce(
+      "Your prompt is copied to the clipboard and your screenshots are saving to your Downloads folder. " +
+      "Copilot has opened in a new tab. Paste the prompt, attach the screenshots from Downloads, then read " +
+      "Copilot's summary. Copy it and paste it into the Save notes box on this page."
+    ), 1200);
+  }
+
+  function speakStatus() {
+    if (stream) {
+      const mins = Math.floor((Date.now() - startedAt) / 60000);
+      announce("Recording. " + count + " screenshots taken. Session running " + mins + " minutes.");
+    } else {
+      announce("Not recording. Press Start capture to begin.");
+    }
+  }
+
+  function saveNotes() {
+    const text = notes.value;
+    if (!text || !text.trim()) { announce("There is nothing to save. Paste Copilot's summary first."); return; }
+    const now = new Date();
+    const pad = (x) => String(x).padStart(2, "0");
+    const stamp = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate()) +
+      "_" + pad(now.getHours()) + "-" + pad(now.getMinutes());
+    downloadBlob(new Blob([text], { type: "text/plain" }), "MeetingNotes_" + stamp + ".txt");
+    announce("Your meeting notes have been saved to your Downloads folder.");
+  }
+
+  startBtn.addEventListener("click", start);
+  stopBtn.addEventListener("click", stop);
+  statusBtn.addEventListener("click", speakStatus);
+  saveBtn.addEventListener("click", saveNotes);
+
+  // In-page keyboard shortcuts (work when the tab is focused and you are not typing).
+  document.addEventListener("keydown", (e) => {
+    const typing = /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName);
+    if (typing || e.ctrlKey || e.altKey || e.metaKey) return;
+    const k = e.key.toLowerCase();
+    if (k === "s") { e.preventDefault(); start(); }
+    else if (k === "x") { e.preventDefault(); stop(); }
+    else if (k === "r") { e.preventDefault(); speakStatus(); }
+  });
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+    announce("This browser cannot capture the screen. Please use Microsoft Edge or Google Chrome.");
+    startBtn.disabled = true;
+  }
+})();
+</script>
+</body>
+</html>
