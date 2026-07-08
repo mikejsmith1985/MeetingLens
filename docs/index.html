@@ -43,7 +43,7 @@
   .setup { background: #f8fafc; border-style: dashed; }
 </style>
 </head>
-<body data-copilot-url="https://copilot.microsoft.com" data-change-sensitivity="10">
+<body data-copilot-url="https://copilot.microsoft.com" data-change-sensitivity="10" data-output-format="pdf">
   <h1>MeetingLens</h1>
   <p class="lead">Capture a meeting's slides and shared screens, then get a screen-reader-friendly summary from Copilot. Everything you need to do is spoken aloud, and the right button is always selected for you — just press <kbd>Enter</kbd> when prompted.</p>
 
@@ -73,15 +73,15 @@
       <li>Your browser opens a share box (read aloud by your screen reader). Press <kbd>Tab</kbd> until you hear <strong>Entire Screen</strong>, select it, then <kbd>Tab</kbd> to <strong>Share</strong> and press <kbd>Enter</kbd>.</li>
       <li>Go to your meeting. MeetingLens takes screenshots on its own and says each one aloud.</li>
       <li>When the meeting ends, come back to this tab. The <strong>Stop</strong> button is selected — press <kbd>Enter</kbd>.</li>
-      <li>An <strong>Open Copilot</strong> button is then selected — press <kbd>Enter</kbd> to open Copilot, paste the prompt, and attach the single <strong>MeetingCaptures.pdf</strong> from your Downloads folder.</li>
+      <li>An <strong>Open Copilot</strong> button is then selected — press <kbd>Enter</kbd> to open Copilot, paste the prompt, and attach the single file MeetingLens just saved to your Downloads folder.</li>
     </ol>
   </div>
 
   <div class="card" id="handoffCard" style="display:none">
     <h2 style="margin-top:0;font-size:1.2rem">Send it to Copilot</h2>
     <p><a id="copilotLink" class="btnlink" target="_blank" rel="noopener" aria-describedby="copilotHelp" href="https://copilot.microsoft.com">Open Copilot in a new tab</a></p>
-    <p class="help" id="copilotHelp">This button is selected — press Enter to open Copilot, then paste the prompt with Ctrl+V and attach the single file MeetingCaptures.pdf from your Downloads folder.</p>
-    <p class="help">Your prompt is copied to the clipboard. In Copilot, paste it with <kbd>Ctrl</kbd>+<kbd>V</kbd> and attach the single file <strong>MeetingCaptures.pdf</strong> from your Downloads folder. If pasting doesn't work, copy it from the box below (<kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>C</kbd>).</p>
+    <p class="help" id="copilotHelp">This button is selected — press Enter to open Copilot, then paste the prompt with Ctrl+V and attach the single file MeetingLens just saved to your Downloads folder.</p>
+    <p class="help">Your prompt is copied to the clipboard. In Copilot, paste it with <kbd>Ctrl</kbd>+<kbd>V</kbd> and attach the single file MeetingLens just saved to your Downloads folder. If pasting doesn't work, copy the prompt from the box below (<kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>C</kbd>).</p>
     <textarea id="promptBox" readonly aria-label="Your Copilot prompt to paste"></textarea>
   </div>
 
@@ -105,6 +105,11 @@
         <option value="10">Medium — recommended</option>
         <option value="7">High</option>
         <option value="4">Very high — catch small changes (most shots)</option>
+      </select></p>
+    <p><label for="outputFormat">What to give Copilot</label>
+      <select id="outputFormat">
+        <option value="pdf">One PDF — one screenshot per page (best quality; may need OneDrive on some Copilots)</option>
+        <option value="image">One tall image — all screenshots stacked (attach or paste inline, no OneDrive)</option>
       </select></p>
     <p class="row">
       <button id="applyBtn" type="button" style="min-width:12rem">Use these settings now</button>
@@ -133,6 +138,7 @@
   const speakAloud = document.getElementById("speakAloud");
   const urlInput = document.getElementById("copilotUrl");
   const sensitivity = document.getElementById("sensitivity");
+  const outputFormat = document.getElementById("outputFormat");
   const applyBtn = document.getElementById("applyBtn");
   const saveCopyBtn = document.getElementById("saveCopyBtn");
   const smartMode = document.getElementById("smartMode");
@@ -298,6 +304,30 @@
       "names, dates, and action items. End with a summary of the key takeaways and any action items with their owners.";
   }
 
+  // Stack every screenshot into one tall JPEG (black gaps mark slide boundaries). A single
+  // image attaches or pastes inline with no OneDrive and stays within Copilot's 3-image limit.
+  async function buildCombinedImage(images) {
+    const GAP = 8, MAX_H = 30000, MAX_W = 1600;
+    const bitmaps = [];
+    for (const s of images) bitmaps.push(await createImageBitmap(new Blob([s.bytes], { type: "image/jpeg" })));
+    const targetW = Math.min(MAX_W, Math.max.apply(null, bitmaps.map((b) => b.width)));
+    let totalH = GAP;
+    const rows = bitmaps.map((b) => { const h = Math.round(b.height * (targetW / b.width)); totalH += h + GAP; return { b, h }; });
+    const scale = totalH > MAX_H ? MAX_H / totalH : 1;
+    const c = document.createElement("canvas");
+    c.width = Math.round(targetW * scale); c.height = Math.round(totalH * scale);
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#000"; ctx.fillRect(0, 0, c.width, c.height);
+    let y = Math.round(GAP * scale);
+    for (const r of rows) {
+      const dh = Math.round(r.h * scale);
+      ctx.drawImage(r.b, 0, y, c.width, dh);
+      y += dh + Math.round(GAP * scale);
+      if (r.b.close) r.b.close();
+    }
+    return await new Promise((res) => c.toBlob(res, "image/jpeg", 0.85));
+  }
+
   async function copyText(text) {
     try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(text); return true; } } catch (e) {}
     try {
@@ -331,12 +361,20 @@
     copilotLink.href = copilotUrl;            // enterprise-configured address
     handoffCard.style.display = "block";
     await copyText(prompt);
-    // One PDF, one page per screenshot — a single file to attach, past Copilot's 3-image limit.
-    downloadBlob(new Blob([buildPdf(shots)], { type: "application/pdf" }), "MeetingCaptures.pdf");
+    // One file to attach — either a PDF (one page per shot) or one tall image (all stacked).
+    let fileName, spokenName;
+    if (outputFormat.value === "image") {
+      downloadBlob(await buildCombinedImage(shots), "MeetingCapture.jpg");
+      fileName = "MeetingCapture.jpg"; spokenName = "Meeting Capture dot J P G";
+    } else {
+      downloadBlob(new Blob([buildPdf(shots)], { type: "application/pdf" }), "MeetingCaptures.pdf");
+      fileName = "MeetingCaptures.pdf"; spokenName = "Meeting Captures dot P D F";
+    }
+    promptBox.setAttribute("data-file", fileName);
     focusControl(copilotLink);
-    announce("Stopping. " + count + " screenshots saved as one file called Meeting Captures dot P D F in your " +
+    announce("Stopping. " + count + " screenshots saved as one file called " + spokenName + " in your " +
       "Downloads folder. Your prompt is copied to the clipboard. The Open Copilot button is now selected — " +
-      "press Enter to open Copilot, paste the prompt, and attach that one PDF file.");
+      "press Enter to open Copilot, paste the prompt, and attach that one file.");
   }
 
   function speakStatus() {
@@ -363,6 +401,7 @@
     changeThreshold = parseInt(sensitivity.value, 10) || DEFAULT_THRESHOLD;
     document.body.setAttribute("data-copilot-url", url);
     document.body.setAttribute("data-change-sensitivity", sensitivity.value);
+    document.body.setAttribute("data-output-format", outputFormat.value);
     announce("Settings applied on this device.");
   }
 
@@ -372,6 +411,7 @@
     const q = (sel) => clone.querySelector(sel);
     clone.querySelector("body").setAttribute("data-copilot-url", url);
     clone.querySelector("body").setAttribute("data-change-sensitivity", sensitivity.value);
+    clone.querySelector("body").setAttribute("data-output-format", outputFormat.value);
     q("#status").textContent = "Loading…";
     q("#startBtn").removeAttribute("disabled");
     q("#stopBtn").setAttribute("disabled", "");
@@ -380,6 +420,10 @@
     // Reflect the chosen sensitivity as the option's selected attribute so the copy opens with it.
     clone.querySelectorAll("#sensitivity option").forEach((opt) => {
       if (opt.value === sensitivity.value) opt.setAttribute("selected", "selected");
+      else opt.removeAttribute("selected");
+    });
+    clone.querySelectorAll("#outputFormat option").forEach((opt) => {
+      if (opt.value === outputFormat.value) opt.setAttribute("selected", "selected");
       else opt.removeAttribute("selected");
     });
     return "<!doctype html>\n" + clone.outerHTML;
@@ -414,6 +458,8 @@
     // Restore the configured sensitivity (baked into the file or default).
     const savedSens = document.body.getAttribute("data-change-sensitivity");
     if (savedSens) { sensitivity.value = savedSens; changeThreshold = parseInt(savedSens, 10) || DEFAULT_THRESHOLD; }
+    const savedFmt = document.body.getAttribute("data-output-format");
+    if (savedFmt) outputFormat.value = savedFmt;
     if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
       statusEl.textContent = "This browser cannot capture the screen. Please use Microsoft Edge or Google Chrome.";
       announce("This browser cannot capture the screen. Please open this page in Microsoft Edge or Google Chrome.");
