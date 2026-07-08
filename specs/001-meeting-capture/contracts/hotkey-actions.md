@@ -1,13 +1,14 @@
 # Contract: Hotkey Actions
 
-Four global hotkeys are the entire input surface (FR-005/FR-006). Each maps to one action on the `AppController`. Behaviour is state-dependent per `data-model.md`.
+Five global hotkeys are the entire input surface (FR-005/FR-006). Each maps to one action on the `AppController`. Behaviour is state-dependent per `data-model.md`.
 
 | Hotkey (default) | Action | When IDLE | When RECORDING |
 |---|---|---|---|
 | `Ctrl+Alt+S` | **Start** | Begin session, reset count, start timer, speak start confirmation | Speak "already recording" — no reset (FR-012) |
 | `Ctrl+Alt+X` | **Stop + Summarise** | Speak "nothing being recorded" | End session, speak final count, run handoff (FR-015–FR-018) |
 | `Ctrl+Alt+R` | **Status** | Speak idle (FR-014) | Speak recording + count + elapsed (FR-013) |
-| `Ctrl+Alt+W` | **Save Notes** | Clipboard→notes file or "nothing to save" (FR-019–FR-021) | Same — save works regardless of session state |
+| `Ctrl+Alt+W` | **Save Notes** | Clipboard→notes file, "nothing to save", or "copy the response first" (FR-019–FR-021, FR-027) | Same — save works regardless of session state |
+| `Ctrl+Alt+Q` | **Quit** | Speak `QUIT`, exit (FR-028) | Stop the session first, then speak `QUIT` and exit |
 
 ## Action guarantees
 

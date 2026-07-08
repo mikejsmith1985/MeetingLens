@@ -13,7 +13,8 @@ Loaded once at startup from `config.txt`; immutable for the process lifetime.
 | `hotkey_stop` | hotkey string | `Ctrl+Alt+X` | parseable chord; else default + warning |
 | `hotkey_status` | hotkey string | `Ctrl+Alt+R` | parseable chord; else default + warning |
 | `hotkey_save` | hotkey string | `Ctrl+Alt+W` | parseable chord; else default + warning |
-| `ai_chat_url` | string (URL) | Copilot/Bing chat URL | non-empty; else default |
+| `hotkey_quit` | hotkey string | `Ctrl+Alt+Q` | parseable chord; else default + warning |
+| `ai_chat_url` | string (URL) | `https://copilot.microsoft.com` | non-empty; else default |
 | `captures_folder` | path | `~/Desktop/MeetingCaptures` | created if missing |
 | `notes_folder` | path | `~/Desktop` | created if missing |
 

@@ -101,7 +101,7 @@ At any time the user can press a status hotkey to hear whether a session is runn
 
 #### Global Hotkeys
 - **FR-005**: The tool MUST register global hotkeys that trigger even when another application (e.g. a video-call or browser window) has keyboard focus.
-- **FR-006**: The tool MUST provide distinct hotkeys to start a capture session, stop-and-summarise, read status, and save notes.
+- **FR-006**: The tool MUST provide distinct hotkeys to start a capture session, stop-and-summarise, read status, save notes, and quit the tool.
 - **FR-007**: If a hotkey cannot be registered (e.g. it is already claimed), the tool MUST announce the failure by speech rather than starting in a silently broken state.
 
 #### Capture
@@ -126,6 +126,7 @@ At any time the user can press a status hotkey to hear whether a session is runn
 - **FR-020**: After writing, the tool MUST open the notes file in a plain-text editor and speak a confirmation that notes are saved and open.
 - **FR-021**: If the clipboard has no text, the tool MUST speak that there is nothing to save and MUST NOT create an empty file.
 - **FR-027**: The tool MUST remember the summarisation prompt it last placed on the clipboard during handoff; if the save hotkey is pressed while the clipboard still contains exactly that prompt, the tool MUST NOT save it, and MUST instead speak a reminder to copy Copilot's response first.
+- **FR-028**: The tool MUST provide a global quit hotkey that stops any active session and exits the application, speaking a spoken confirmation, so the user can close it entirely from the keyboard without a mouse (supports FR-002).
 
 #### Configuration
 - **FR-022**: The tool MUST read all hotkeys and the capture interval from a plain-text configuration file that a screen reader can read and edit.
@@ -142,7 +143,7 @@ At any time the user can press a status hotkey to hear whether a session is runn
 - **Screenshot**: One captured image of the primary screen, saved to the capture folder, ordered by capture time, associated with the session that produced it.
 - **Summarisation Prompt**: The dynamically composed instruction text placed on the clipboard, parameterised by screenshot count and interval.
 - **Meeting Notes File**: A timestamped plain-text file containing the AI response text saved from the clipboard.
-- **Configuration**: The plain-text set of user-adjustable values — capture interval and the four hotkeys — with built-in defaults.
+- **Configuration**: The plain-text set of user-adjustable values — capture interval, the five hotkeys, and the AI chat URL — with built-in defaults.
 
 ## Success Criteria *(mandatory)*
 

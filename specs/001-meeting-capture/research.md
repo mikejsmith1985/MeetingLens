@@ -45,14 +45,14 @@ The feature brief was prescriptive about the stack, so research here confirms ea
 
 - **Decision**: `webbrowser.open(<ai_chat_url>)` for the browser; `os.startfile(<folder>)` to open the captures folder in Explorer; `os.startfile(<notes_file>)` (or `notepad.exe <file>`) to open notes. All stdlib.
 - **Rationale**: No extra dependency; uses the user's default handlers. Opening the folder lets the user Tab to files for attachment (FR-017).
-- **Resolved unknown — AI chat URL**: The brief names `bing.com/chat`. Decision: store the target URL in `config.txt` (default to the Copilot/Bing chat URL) so it can be updated without a rebuild when the endpoint changes — avoids hard-coding a volatile URL and keeps it screen-reader-editable.
+- **Resolved unknown — AI chat URL**: The brief named `bing.com/chat`, but Bing Chat has rebranded to Copilot at `https://copilot.microsoft.com`. Decision: default `ai_chat_url` to `https://copilot.microsoft.com` and store it in `config.txt` so it can be updated without a rebuild when the endpoint changes — avoids hard-coding a volatile URL and keeps it screen-reader-editable.
 
 ## Decision 8 — Config format & location
 
 - **Decision**: A flat `key=value` plain-text `config.txt` in the app folder, parsed with the standard library; unknown/missing/malformed keys fall back to named defaults and a spoken warning (FR-022, FR-023).
 - **Rationale**: A screen reader can read and edit it in Notepad with zero structure to navigate. Simpler than INI/JSON/YAML and matches the brief's example verbatim.
 - **Alternatives considered**: `configparser`/INI (needs a section header, minor extra friction for the user); JSON/YAML (punctuation-heavy, error-prone to hand-edit by ear).
-- **Keys**: `interval_seconds`, `hotkey_start`, `hotkey_stop`, `hotkey_status`, `hotkey_save`, plus `ai_chat_url` (new, from Decision 7) and `captures_folder` (defaulted).
+- **Keys**: `interval_seconds`, `hotkey_start`, `hotkey_stop`, `hotkey_status`, `hotkey_save`, `hotkey_quit`, plus `ai_chat_url` (from Decision 7) and `captures_folder`/`notes_folder` (defaulted).
 
 ## Decision 9 — Packaging / install with no terminal (FR-003, Article VIII)
 

@@ -28,7 +28,7 @@ MeetingLens is an offline, tray-resident Windows utility that lets a blind user 
 
 **Constraints**: Fully offline for capture, speech, status, and save (SC-008/FR-026). No mouse interaction required (FR-002). No terminal command to install or run (FR-003). Primary display only (v1). Must degrade gracefully — missing folders auto-created, failed captures skipped without crashing, unregisterable hotkeys announced by speech, malformed config falls back to defaults.
 
-**Scale/Scope**: Single local user, one active session at a time; sessions may reach hundreds of screenshots over an hour without responsiveness loss. ~6 modules, four hotkey actions.
+**Scale/Scope**: Single local user, one active session at a time; sessions may reach hundreds of screenshots over an hour without responsiveness loss. ~6 modules, five hotkey actions (start, stop, status, save, quit).
 
 ## Constitution Check
 

@@ -14,7 +14,7 @@ This guide proves the feature works end-to-end with observable evidence (Article
 python -m meetinglens
 ```
 
-Expect to hear the `READY` message (FR-004). A tray icon appears (idle state).
+Expect to hear the `READY` message (FR-004). A tray icon appears (idle state). Press `Ctrl+Alt+Q` at any time to stop any session and quit from the keyboard — you should hear "MeetingLens is closing. Goodbye." (FR-028).
 
 ## Story 1 — Capture (P1)
 

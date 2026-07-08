@@ -11,7 +11,8 @@ Plain-text, screen-reader-editable, one `key=value` per line. Lines beginning `#
 | `hotkey_stop` | chord | `Ctrl+Alt+X` | Stop + summarise |
 | `hotkey_status` | chord | `Ctrl+Alt+R` | Speak status |
 | `hotkey_save` | chord | `Ctrl+Alt+W` | Save clipboard → notes |
-| `ai_chat_url` | URL | `https://www.bing.com/chat` | Opened on stop |
+| `hotkey_quit` | chord | `Ctrl+Alt+Q` | Stop any session and exit (keyboard-only quit, FR-028) |
+| `ai_chat_url` | URL | `https://copilot.microsoft.com` | Opened on stop (user-overridable if the endpoint changes) |
 | `captures_folder` | path | `%USERPROFILE%\Desktop\MeetingCaptures` | Auto-created |
 | `notes_folder` | path | `%USERPROFILE%\Desktop` | Auto-created |
 
@@ -28,8 +29,9 @@ hotkey_start=Ctrl+Alt+S
 hotkey_stop=Ctrl+Alt+X
 hotkey_status=Ctrl+Alt+R
 hotkey_save=Ctrl+Alt+W
+hotkey_quit=Ctrl+Alt+Q
 # Where the summary is generated and where screenshots are stored.
-ai_chat_url=https://www.bing.com/chat
+ai_chat_url=https://copilot.microsoft.com
 ```
 
 ## Validation contract
