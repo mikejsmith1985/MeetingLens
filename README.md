@@ -19,6 +19,22 @@ Python. On first run MeetingLens speaks: *"MeetingLens is ready. Press Control A
 recording. Press Control Alt X to stop."* and quietly writes an editable `config.txt` next to
 itself in case you ever want to change a hotkey.
 
+## Web edition (nothing to download): just open a link
+
+The easiest option for a locked-down work PC — it's a website, so nothing is downloaded,
+installed, or blocked, and it works with the screen reader you already use:
+
+**→ https://mikejsmith1985.github.io/MeetingLens/**
+
+Open it in Microsoft Edge or Chrome, press **Start capture**, and choose **Entire Screen**.
+It screenshots your screen on an interval (speaking each one aloud) while you sit in your
+meeting; when you press **Stop**, it downloads the screenshots, copies the Copilot prompt to
+your clipboard, and opens Copilot for you.
+
+Trade-off vs. the app: the Start/Stop buttons only respond when the MeetingLens tab is focused
+(there are no system-wide hotkeys in a browser), and you grant screen-sharing once per meeting.
+Capture itself runs on its own in the background once started.
+
 ## No-exe edition (locked-down PCs): `meetinglens.ps1`
 
 If your workplace blocks downloading `.exe` files, use the PowerShell edition — a single text
