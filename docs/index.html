@@ -15,9 +15,10 @@
   @media (prefers-color-scheme: dark) {
     body { background: #0b1220; color: #e5e7eb; }
     .card { background: #111a2e; border-color: #24324d; }
-    button { background: #1d4ed8; } button.stop { background: #b91c1c; }
+    button, .btnlink { background: #1d4ed8; } button.stop { background: #b91c1c; }
     input, textarea { background: #0b1220; color: #e5e7eb; border-color: #33415c; }
     a { color: #93c5fd; } .status { background: #0f2547; border-color: #1e3a8a; }
+    .setup { background: #0e1626; border-color: #33415c; }
   }
   h1 { font-size: 1.8rem; margin: 0 0 .25rem; }
   p.lead { margin-top: 0; opacity: .85; }
@@ -25,8 +26,9 @@
   .status { font-size: 1.4rem; font-weight: 700; padding: 1rem; border-radius: 10px;
     background: #eff6ff; border: 2px solid #bfdbfe; margin-bottom: 1rem; }
   .row { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; }
-  button { font-size: 1.15rem; font-weight: 700; padding: .85rem 1.4rem; border: none;
-    border-radius: 10px; background: #1d4ed8; color: #fff; cursor: pointer; min-width: 13rem; }
+  button, .btnlink { font-size: 1.15rem; font-weight: 700; padding: .85rem 1.4rem; border: none;
+    border-radius: 10px; background: #1d4ed8; color: #fff; cursor: pointer; min-width: 13rem;
+    display: inline-block; text-align: center; text-decoration: none; }
   button.stop { background: #dc2626; }
   button:disabled { opacity: .45; cursor: not-allowed; }
   button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible {
@@ -34,17 +36,17 @@
   .help { font-size: 1rem; opacity: .85; margin: .4rem 0 0; }
   label { font-weight: 600; display: block; margin-bottom: .25rem; }
   input[type=number] { font-size: 1.1rem; padding: .5rem; width: 6rem; border: 2px solid #cbd5e1; border-radius: 8px; }
+  input[type=url] { font-size: 1.05rem; padding: .55rem; width: 100%; border: 2px solid #cbd5e1; border-radius: 8px; }
   textarea { width: 100%; min-height: 8rem; font-size: 1.05rem; padding: .6rem; border: 2px solid #cbd5e1; border-radius: 8px; }
   kbd { background: #374151; color: #fff; border-radius: 5px; padding: .1rem .4rem; font-size: .9rem; }
   ol { padding-left: 1.4rem; }
+  .setup { background: #f8fafc; border-style: dashed; }
 </style>
 </head>
-<body>
+<body data-copilot-url="https://copilot.microsoft.com">
   <h1>MeetingLens</h1>
   <p class="lead">Capture a meeting's slides and shared screens, then get a screen-reader-friendly summary from Copilot. Everything you need to do is spoken aloud, and the right button is always selected for you — just press <kbd>Enter</kbd> when prompted.</p>
 
-  <!-- Visual status banner (not a live region: guidance is delivered by speech + focus so a
-       screen reader is not talking over the spoken announcements). -->
   <div id="status" class="status">Loading…</div>
 
   <div class="card">
@@ -65,15 +67,16 @@
     <ol>
       <li>The <strong>Start</strong> button is already selected. Press <kbd>Enter</kbd>.</li>
       <li>Your browser asks what to share. Choose <strong>Entire Screen</strong>, then <strong>Share</strong>.</li>
-      <li>Go to your meeting. MeetingLens takes screenshots on its own and says each one aloud. You don't need to do anything.</li>
-      <li>When the meeting ends, come back to this tab. The <strong>Stop</strong> button is now selected — press <kbd>Enter</kbd>.</li>
-      <li>Your screenshots download, the Copilot prompt is copied, and Copilot opens. Paste the prompt, attach the screenshots, and read the summary.</li>
+      <li>Go to your meeting. MeetingLens takes screenshots on its own and says each one aloud.</li>
+      <li>When the meeting ends, come back to this tab. The <strong>Stop</strong> button is selected — press <kbd>Enter</kbd>.</li>
+      <li>An <strong>Open Copilot</strong> button is then selected — press <kbd>Enter</kbd> to open Copilot, paste the prompt, and attach the screenshots.</li>
     </ol>
   </div>
 
-  <div class="card" id="promptCard" style="display:none">
-    <h2 style="margin-top:0;font-size:1.2rem">Your Copilot prompt</h2>
-    <p class="help">This was copied to your clipboard. If pasting doesn't work, click in the box below and press <kbd>Ctrl</kbd>+<kbd>A</kbd> then <kbd>Ctrl</kbd>+<kbd>C</kbd>.</p>
+  <div class="card" id="handoffCard" style="display:none">
+    <h2 style="margin-top:0;font-size:1.2rem">Send it to Copilot</h2>
+    <p><a id="copilotLink" class="btnlink" target="_blank" rel="noopener" href="https://copilot.microsoft.com">Open Copilot in a new tab</a></p>
+    <p class="help">Your prompt is copied to the clipboard. In Copilot, paste it with <kbd>Ctrl</kbd>+<kbd>V</kbd> and attach the screenshots from your Downloads folder. If pasting doesn't work, copy it from the box below (<kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>C</kbd>).</p>
     <textarea id="promptBox" readonly aria-label="Your Copilot prompt to paste"></textarea>
   </div>
 
@@ -85,13 +88,24 @@
     <p><button id="saveBtn" type="button"><span aria-hidden="true">💾 </span>Save notes to a file</button></p>
   </div>
 
+  <div class="card setup">
+    <h2 style="margin-top:0;font-size:1.2rem">Setup — for the person configuring this</h2>
+    <p class="help">If your organisation uses a specific Copilot web address, paste it here, then click <strong>Save a copy to send</strong>. That downloads a MeetingLens file with your address built in — send <em>that</em> file to the person who will use it. Your address stays on your computer and in the file you send.</p>
+    <p><label for="copilotUrl">Copilot web address</label>
+      <input id="copilotUrl" type="url" inputmode="url" spellcheck="false" placeholder="https://copilot.microsoft.com" /></p>
+    <p class="row">
+      <button id="applyBtn" type="button" style="min-width:12rem">Use this address now</button>
+      <button id="saveCopyBtn" type="button" style="min-width:16rem"><span aria-hidden="true">📄 </span>Save a copy to send</button>
+    </p>
+  </div>
+
   <video id="preview" playsinline muted style="display:none"></video>
   <canvas id="canvas" style="display:none"></canvas>
 
 <script>
 (() => {
   "use strict";
-  const COPILOT_URL = "https://copilot.microsoft.com";
+  const DEFAULT_URL = "https://copilot.microsoft.com";
 
   const statusEl = document.getElementById("status");
   const startBtn = document.getElementById("startBtn");
@@ -99,30 +113,27 @@
   const intervalInput = document.getElementById("interval");
   const notes = document.getElementById("notes");
   const saveBtn = document.getElementById("saveBtn");
-  const promptCard = document.getElementById("promptCard");
+  const handoffCard = document.getElementById("handoffCard");
   const promptBox = document.getElementById("promptBox");
+  const copilotLink = document.getElementById("copilotLink");
+  const urlInput = document.getElementById("copilotUrl");
+  const applyBtn = document.getElementById("applyBtn");
+  const saveCopyBtn = document.getElementById("saveCopyBtn");
   const video = document.getElementById("preview");
   const canvas = document.getElementById("canvas");
 
   let stream = null, timer = null, count = 0, startedAt = 0, shots = [], keepAlive = null;
+  // The Copilot address is read from the page itself (data-copilot-url), so a configured
+  // copy carries it in the file — no server, no storage, nothing shared externally.
+  let copilotUrl = (document.body.getAttribute("data-copilot-url") || DEFAULT_URL).trim() || DEFAULT_URL;
 
-  // Speak a message aloud (works with or without a screen reader) and show it visibly.
   function announce(text) {
     statusEl.textContent = text;
-    try {
-      const u = new SpeechSynthesisUtterance(text);
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(u);
-    } catch (e) { /* speech is a bonus; focus + labels still guide the user */ }
+    try { const u = new SpeechSynthesisUtterance(text); window.speechSynthesis.cancel(); window.speechSynthesis.speak(u); }
+    catch (e) {}
   }
-
-  // Move keyboard focus to a control so a screen reader announces it and Enter activates it.
   function focusControl(el) { try { el.focus(); } catch (e) {} }
-
-  function intervalMs() {
-    const n = parseInt(intervalInput.value, 10);
-    return (Number.isFinite(n) && n >= 5 ? n : 45) * 1000;
-  }
+  function intervalMs() { const n = parseInt(intervalInput.value, 10); return (Number.isFinite(n) && n >= 5 ? n : 45) * 1000; }
 
   function startKeepAlive() {
     try {
@@ -179,8 +190,7 @@
   }
 
   async function copyText(text) {
-    try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(text); return true; } }
-    catch (e) {}
+    try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(text); return true; } } catch (e) {}
     try {
       const ta = document.createElement("textarea");
       ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
@@ -204,24 +214,23 @@
     startBtn.disabled = false; stopBtn.disabled = true;
     const secs = Math.round(intervalMs() / 1000);
     const prompt = buildPrompt(count, secs);
-    promptBox.value = prompt; promptCard.style.display = "block";
+    promptBox.value = prompt;
+    copilotLink.href = copilotUrl;            // enterprise-configured address
+    handoffCard.style.display = "block";
     await copyText(prompt);
     shots.forEach((s, i) => setTimeout(() => downloadBlob(s.blob, s.name), i * 250));
-    window.open(COPILOT_URL, "_blank", "noopener");
-    focusControl(notes);
-    announce("Stopping. " + count + " screenshots taken. Your screenshots are downloading and your " +
-      "Copilot prompt is copied. Copilot is opening in a new tab. Paste the prompt with Control V, attach " +
-      "the screenshots from your Downloads folder, then copy Copilot's summary. Come back here and paste " +
-      "it into the notes box, which is now selected.");
+    // Do NOT auto-open (that gets popup-blocked and is jarring). Focus a real link she opens.
+    focusControl(copilotLink);
+    announce("Stopping. " + count + " screenshots taken and downloading. Your prompt is copied to the " +
+      "clipboard. The Open Copilot button is now selected — press Enter to open Copilot in a new tab, then " +
+      "paste the prompt and attach the screenshots from your Downloads folder.");
   }
 
   function speakStatus() {
     if (stream) {
       const mins = Math.floor((Date.now() - startedAt) / 60000);
       announce("Recording. " + count + " screenshots taken. Session running " + mins + " minutes.");
-    } else {
-      announce("Not recording. The Start button is selected. Press Enter to begin.");
-    }
+    } else { announce("Not recording. The Start button is selected. Press Enter to begin."); }
   }
 
   function saveNotes() {
@@ -234,11 +243,40 @@
     announce("Your meeting notes have been saved to your Downloads folder.");
   }
 
+  // --- setup: configure the Copilot address and export a ready-to-send copy ---
+  function applyUrl() {
+    const url = (urlInput.value || "").trim() || DEFAULT_URL;
+    copilotUrl = url; copilotLink.href = url;
+    document.body.setAttribute("data-copilot-url", url);
+    announce("This device will now use that Copilot address.");
+  }
+
+  function buildConfiguredHtml(url) {
+    // Serialize a clean clone (not the live, mutated page) with the address baked in.
+    const clone = document.documentElement.cloneNode(true);
+    clone.querySelector("body").setAttribute("data-copilot-url", url);
+    const q = (sel) => clone.querySelector(sel);
+    q("#status").textContent = "Loading…";
+    q("#startBtn").removeAttribute("disabled");
+    q("#stopBtn").setAttribute("disabled", "");
+    q("#handoffCard").setAttribute("style", "display:none");
+    q("#copilotUrl").setAttribute("value", url);
+    return "<!doctype html>\n" + clone.outerHTML;
+  }
+
+  function saveCopy() {
+    const url = (urlInput.value || "").trim() || DEFAULT_URL;
+    applyUrl();
+    downloadBlob(new Blob([buildConfiguredHtml(url)], { type: "text/html" }), "MeetingLens.html");
+    announce("Saved. A copy of MeetingLens with your Copilot address has downloaded to your Downloads folder. Send that file to the person who will use it.");
+  }
+
   startBtn.addEventListener("click", start);
   stopBtn.addEventListener("click", stop);
   saveBtn.addEventListener("click", saveNotes);
+  applyBtn.addEventListener("click", applyUrl);
+  saveCopyBtn.addEventListener("click", saveCopy);
 
-  // Optional single-key shortcuts for sighted users (screen readers use their own navigation).
   document.addEventListener("keydown", (e) => {
     const typing = /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName);
     if (typing || e.ctrlKey || e.altKey || e.metaKey) return;
@@ -249,18 +287,17 @@
   });
 
   function init() {
+    urlInput.value = copilotUrl;
+    copilotLink.href = copilotUrl;
     if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
       statusEl.textContent = "This browser cannot capture the screen. Please use Microsoft Edge or Google Chrome.";
       announce("This browser cannot capture the screen. Please open this page in Microsoft Edge or Google Chrome.");
-      startBtn.disabled = true;
-      return;
+      startBtn.disabled = true; return;
     }
-    // Put the user ON the Start button so the screen reader announces it and Enter just works.
     focusControl(startBtn);
     announce("MeetingLens is ready. The Start button is selected. Press Enter to begin. Your browser will then ask what to share — choose Entire Screen, then choose Share.");
   }
 
-  // Delay slightly so the screen reader settles on the page before we set focus and speak.
   window.addEventListener("load", () => setTimeout(init, 400));
 })();
 </script>
