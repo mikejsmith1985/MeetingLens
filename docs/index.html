@@ -10,83 +10,79 @@
   body {
     font-family: system-ui, "Segoe UI", Arial, sans-serif;
     font-size: 20px; line-height: 1.5; margin: 0; padding: 1.5rem;
-    max-width: 780px; margin-inline: auto;
-    background: #ffffff; color: #111827;
+    max-width: 780px; margin-inline: auto; background: #ffffff; color: #111827;
   }
   @media (prefers-color-scheme: dark) {
     body { background: #0b1220; color: #e5e7eb; }
     .card { background: #111a2e; border-color: #24324d; }
-    button { background: #1d4ed8; }
-    button.stop { background: #b91c1c; }
+    button { background: #1d4ed8; } button.stop { background: #b91c1c; }
     input, textarea { background: #0b1220; color: #e5e7eb; border-color: #33415c; }
-    a { color: #93c5fd; }
+    a { color: #93c5fd; } .status { background: #0f2547; border-color: #1e3a8a; }
   }
   h1 { font-size: 1.8rem; margin: 0 0 .25rem; }
   p.lead { margin-top: 0; opacity: .85; }
   .card { border: 2px solid #d1d5db; border-radius: 12px; padding: 1rem 1.25rem; margin: 1rem 0; }
-  .status {
-    font-size: 1.4rem; font-weight: 700; padding: 1rem; border-radius: 10px;
-    background: #eff6ff; border: 2px solid #bfdbfe; margin-bottom: 1rem;
-  }
-  @media (prefers-color-scheme: dark) { .status { background: #0f2547; border-color: #1e3a8a; } }
+  .status { font-size: 1.4rem; font-weight: 700; padding: 1rem; border-radius: 10px;
+    background: #eff6ff; border: 2px solid #bfdbfe; margin-bottom: 1rem; }
   .row { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; }
-  button {
-    font-size: 1.15rem; font-weight: 700; padding: .75rem 1.25rem; border: none;
-    border-radius: 10px; background: #1d4ed8; color: #fff; cursor: pointer; min-width: 12rem;
-  }
+  button { font-size: 1.15rem; font-weight: 700; padding: .85rem 1.4rem; border: none;
+    border-radius: 10px; background: #1d4ed8; color: #fff; cursor: pointer; min-width: 13rem; }
   button.stop { background: #dc2626; }
   button:disabled { opacity: .45; cursor: not-allowed; }
   button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible {
-    outline: 4px solid #f59e0b; outline-offset: 2px;
-  }
+    outline: 4px solid #f59e0b; outline-offset: 3px; }
+  .help { font-size: 1rem; opacity: .85; margin: .4rem 0 0; }
   label { font-weight: 600; display: block; margin-bottom: .25rem; }
   input[type=number] { font-size: 1.1rem; padding: .5rem; width: 6rem; border: 2px solid #cbd5e1; border-radius: 8px; }
   textarea { width: 100%; min-height: 8rem; font-size: 1.05rem; padding: .6rem; border: 2px solid #cbd5e1; border-radius: 8px; }
   kbd { background: #374151; color: #fff; border-radius: 5px; padding: .1rem .4rem; font-size: .9rem; }
   ol { padding-left: 1.4rem; }
-  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 </style>
 </head>
 <body>
   <h1>MeetingLens</h1>
-  <p class="lead">Capture a meeting's slides and shared screens, then get a screen-reader-friendly summary from Copilot. Everything is spoken aloud. Works entirely in your browser — nothing to install.</p>
+  <p class="lead">Capture a meeting's slides and shared screens, then get a screen-reader-friendly summary from Copilot. Everything you need to do is spoken aloud, and the right button is always selected for you — just press <kbd>Enter</kbd> when prompted.</p>
 
-  <!-- Spoken + screen-reader status. aria-live announces it; we also speak it aloud. -->
-  <div id="status" class="status" role="status" aria-live="assertive">Ready. Press Start capture to begin.</div>
+  <!-- Visual status banner (not a live region: guidance is delivered by speech + focus so a
+       screen reader is not talking over the spoken announcements). -->
+  <div id="status" class="status">Loading…</div>
 
   <div class="card">
     <div class="row">
-      <button id="startBtn" type="button">▶ Start capture <span class="visually-hidden">(shortcut S)</span></button>
-      <button id="stopBtn" type="button" class="stop" disabled>■ Stop &amp; make summary <span class="visually-hidden">(shortcut X)</span></button>
-      <button id="statusBtn" type="button">🔊 Speak status <span class="visually-hidden">(shortcut R)</span></button>
+      <button id="startBtn" type="button" aria-describedby="startHelp">
+        <span aria-hidden="true">▶ </span>Start capture</button>
+      <button id="stopBtn" type="button" class="stop" aria-describedby="stopHelp" disabled>
+        <span aria-hidden="true">■ </span>Stop and make summary</button>
     </div>
-    <p style="margin:.75rem 0 0"><label for="interval">Seconds between screenshots</label>
+    <p class="help" id="startHelp">Press Enter to begin capturing. Your browser will ask what to share — choose <strong>Entire Screen</strong>, then <strong>Share</strong>.</p>
+    <p class="help" id="stopHelp">When your meeting ends, this button is selected — press Enter to stop and prepare your summary.</p>
+    <p class="help"><label for="interval">Seconds between screenshots</label>
       <input id="interval" type="number" min="5" max="600" value="45" /></p>
-    <p style="font-size:.95rem;opacity:.8;margin:.5rem 0 0">When this tab is focused you can also press <kbd>S</kbd> start, <kbd>X</kbd> stop, <kbd>R</kbd> status.</p>
   </div>
 
   <div class="card">
-    <h2 style="margin-top:0;font-size:1.2rem">How to use it</h2>
+    <h2 style="margin-top:0;font-size:1.2rem">What happens, step by step</h2>
     <ol>
-      <li>Press <strong>Start capture</strong>. Your browser asks what to share — choose <strong>Entire Screen</strong>, then <strong>Share</strong>.</li>
-      <li>Go to your meeting as normal. MeetingLens keeps taking screenshots on its own and says each one aloud.</li>
-      <li>When the meeting ends, come back to this tab and press <strong>Stop &amp; make summary</strong>.</li>
-      <li>Your screenshots download to your Downloads folder, the prompt is copied to your clipboard, and Copilot opens in a new tab. Paste the prompt, attach the screenshots, and read Copilot's summary.</li>
+      <li>The <strong>Start</strong> button is already selected. Press <kbd>Enter</kbd>.</li>
+      <li>Your browser asks what to share. Choose <strong>Entire Screen</strong>, then <strong>Share</strong>.</li>
+      <li>Go to your meeting. MeetingLens takes screenshots on its own and says each one aloud. You don't need to do anything.</li>
+      <li>When the meeting ends, come back to this tab. The <strong>Stop</strong> button is now selected — press <kbd>Enter</kbd>.</li>
+      <li>Your screenshots download, the Copilot prompt is copied, and Copilot opens. Paste the prompt, attach the screenshots, and read the summary.</li>
     </ol>
   </div>
 
   <div class="card" id="promptCard" style="display:none">
     <h2 style="margin-top:0;font-size:1.2rem">Your Copilot prompt</h2>
-    <p style="margin-top:0">This was copied to your clipboard automatically. If pasting doesn't work,
-      click in the box below, press <kbd>Ctrl</kbd>+<kbd>A</kbd> then <kbd>Ctrl</kbd>+<kbd>C</kbd> to copy it.</p>
+    <p class="help">This was copied to your clipboard. If pasting doesn't work, click in the box below and press <kbd>Ctrl</kbd>+<kbd>A</kbd> then <kbd>Ctrl</kbd>+<kbd>C</kbd>.</p>
     <textarea id="promptBox" readonly aria-label="Your Copilot prompt to paste"></textarea>
   </div>
 
   <div class="card">
     <h2 style="margin-top:0;font-size:1.2rem">Save Copilot's answer as notes</h2>
-    <label for="notes">Paste Copilot's summary here, then press Save.</label>
-    <textarea id="notes" placeholder="Paste the summary from Copilot here..."></textarea>
-    <p style="margin:.6rem 0 0"><button id="saveBtn" type="button">💾 Save notes to a file</button></p>
+    <label for="notes">Paste Copilot's summary here, then press the Save button.</label>
+    <textarea id="notes" aria-describedby="saveHelp" placeholder="Paste the summary from Copilot here…"></textarea>
+    <p class="help" id="saveHelp">Tab once to reach the Save button, then press Enter to save the summary as a file.</p>
+    <p><button id="saveBtn" type="button"><span aria-hidden="true">💾 </span>Save notes to a file</button></p>
   </div>
 
   <video id="preview" playsinline muted style="display:none"></video>
@@ -100,7 +96,6 @@
   const statusEl = document.getElementById("status");
   const startBtn = document.getElementById("startBtn");
   const stopBtn = document.getElementById("stopBtn");
-  const statusBtn = document.getElementById("statusBtn");
   const intervalInput = document.getElementById("interval");
   const notes = document.getElementById("notes");
   const saveBtn = document.getElementById("saveBtn");
@@ -109,75 +104,69 @@
   const video = document.getElementById("preview");
   const canvas = document.getElementById("canvas");
 
-  let stream = null;
-  let timer = null;
-  let count = 0;
-  let startedAt = 0;
-  let shots = [];        // { name, blob }
-  let keepAlive = null;  // AudioContext to keep the background tab awake
+  let stream = null, timer = null, count = 0, startedAt = 0, shots = [], keepAlive = null;
 
   // Speak a message aloud (works with or without a screen reader) and show it visibly.
   function announce(text) {
     statusEl.textContent = text;
     try {
       const u = new SpeechSynthesisUtterance(text);
-      u.rate = 1.0;
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(u);
-    } catch (e) { /* speech optional */ }
+    } catch (e) { /* speech is a bonus; focus + labels still guide the user */ }
   }
+
+  // Move keyboard focus to a control so a screen reader announces it and Enter activates it.
+  function focusControl(el) { try { el.focus(); } catch (e) {} }
 
   function intervalMs() {
     const n = parseInt(intervalInput.value, 10);
     return (Number.isFinite(n) && n >= 5 ? n : 45) * 1000;
   }
 
-  // A silent oscillator keeps the tab from being throttled/frozen while in the background.
   function startKeepAlive() {
     try {
       const Ctx = window.AudioContext || window.webkitAudioContext;
       keepAlive = new Ctx();
-      const osc = keepAlive.createOscillator();
-      const gain = keepAlive.createGain();
-      gain.gain.value = 0.0001; // effectively silent
-      osc.connect(gain); gain.connect(keepAlive.destination);
-      osc.start();
-    } catch (e) { /* best effort */ }
+      const osc = keepAlive.createOscillator(), gain = keepAlive.createGain();
+      gain.gain.value = 0.0001; osc.connect(gain); gain.connect(keepAlive.destination); osc.start();
+    } catch (e) {}
   }
   function stopKeepAlive() { if (keepAlive) { keepAlive.close(); keepAlive = null; } }
 
   function captureFrame() {
     if (!stream) return;
     const w = video.videoWidth, h = video.videoHeight;
-    if (!w || !h) return; // frame not ready; skip, session continues
+    if (!w || !h) return;
     canvas.width = w; canvas.height = h;
     canvas.getContext("2d").drawImage(video, 0, 0, w, h);
     canvas.toBlob((blob) => {
       if (!blob) return;
       count += 1;
-      const name = "capture_" + String(count).padStart(3, "0") + ".png";
-      shots.push({ name, blob });
+      shots.push({ name: "capture_" + String(count).padStart(3, "0") + ".png", blob });
       announce("Screenshot " + count + " taken.");
     }, "image/png");
   }
 
   async function start() {
     if (stream) { announce("Already recording. " + count + " screenshots taken so far."); return; }
+    announce("Starting. Your browser will now ask what to share. Choose Entire Screen, then choose Share.");
     try {
       stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 1 }, audio: false });
     } catch (e) {
-      announce("Screen sharing was not started. Press Start capture and choose Entire Screen.");
+      focusControl(startBtn);
+      announce("Screen sharing was not started. The Start button is selected again. Press Enter to try, and choose Entire Screen, then Share.");
       return;
     }
     video.srcObject = stream;
     await video.play().catch(() => {});
-    // If the user stops sharing via the browser bar, end the session cleanly.
     stream.getVideoTracks()[0].addEventListener("ended", () => { if (stream) stop(); });
     count = 0; shots = []; startedAt = Date.now();
     startBtn.disabled = true; stopBtn.disabled = false;
     startKeepAlive();
     timer = setInterval(captureFrame, intervalMs());
-    announce("Meeting capture started. 0 screenshots taken so far.");
+    focusControl(stopBtn);
+    announce("Capture started. Screenshots are being taken automatically and read aloud. The Stop button is now selected. When your meeting ends, press Enter to stop and make your summary.");
   }
 
   function buildPrompt(n, secs) {
@@ -189,29 +178,21 @@
       "key takeaways and any action items with owners.";
   }
 
-  // Copy text to the clipboard, with a legacy fallback for file:// where the async API may fail.
   async function copyText(text) {
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(text);
-        return true;
-      }
-    } catch (e) { /* fall through to legacy path */ }
+    try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(text); return true; } }
+    catch (e) {}
     try {
       const ta = document.createElement("textarea");
       ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
       document.body.appendChild(ta); ta.focus(); ta.select();
-      const ok = document.execCommand("copy");
-      ta.remove();
-      return ok;
+      const ok = document.execCommand("copy"); ta.remove(); return ok;
     } catch (e) { return false; }
   }
 
   function downloadBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click(); a.remove();
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
   }
 
@@ -222,22 +203,16 @@
     stopKeepAlive();
     startBtn.disabled = false; stopBtn.disabled = true;
     const secs = Math.round(intervalMs() / 1000);
-    announce("Stopping capture. " + count + " screenshots taken. Preparing your summary.");
-
     const prompt = buildPrompt(count, secs);
-    promptBox.value = prompt;
-    promptCard.style.display = "block";   // always show it as a manual-copy fallback
+    promptBox.value = prompt; promptCard.style.display = "block";
     await copyText(prompt);
-
-    // Download each screenshot (browser asks once to allow multiple downloads).
     shots.forEach((s, i) => setTimeout(() => downloadBlob(s.blob, s.name), i * 250));
-
     window.open(COPILOT_URL, "_blank", "noopener");
-    setTimeout(() => announce(
-      "Your prompt is copied to the clipboard and your screenshots are saving to your Downloads folder. " +
-      "Copilot has opened in a new tab. Paste the prompt, attach the screenshots from Downloads, then read " +
-      "Copilot's summary. Copy it and paste it into the Save notes box on this page."
-    ), 1200);
+    focusControl(notes);
+    announce("Stopping. " + count + " screenshots taken. Your screenshots are downloading and your " +
+      "Copilot prompt is copied. Copilot is opening in a new tab. Paste the prompt with Control V, attach " +
+      "the screenshots from your Downloads folder, then copy Copilot's summary. Come back here and paste " +
+      "it into the notes box, which is now selected.");
   }
 
   function speakStatus() {
@@ -245,15 +220,14 @@
       const mins = Math.floor((Date.now() - startedAt) / 60000);
       announce("Recording. " + count + " screenshots taken. Session running " + mins + " minutes.");
     } else {
-      announce("Not recording. Press Start capture to begin.");
+      announce("Not recording. The Start button is selected. Press Enter to begin.");
     }
   }
 
   function saveNotes() {
     const text = notes.value;
-    if (!text || !text.trim()) { announce("There is nothing to save. Paste Copilot's summary first."); return; }
-    const now = new Date();
-    const pad = (x) => String(x).padStart(2, "0");
+    if (!text || !text.trim()) { announce("There is nothing to save. Paste Copilot's summary into the box first."); focusControl(notes); return; }
+    const now = new Date(), pad = (x) => String(x).padStart(2, "0");
     const stamp = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate()) +
       "_" + pad(now.getHours()) + "-" + pad(now.getMinutes());
     downloadBlob(new Blob([text], { type: "text/plain" }), "MeetingNotes_" + stamp + ".txt");
@@ -262,10 +236,9 @@
 
   startBtn.addEventListener("click", start);
   stopBtn.addEventListener("click", stop);
-  statusBtn.addEventListener("click", speakStatus);
   saveBtn.addEventListener("click", saveNotes);
 
-  // In-page keyboard shortcuts (work when the tab is focused and you are not typing).
+  // Optional single-key shortcuts for sighted users (screen readers use their own navigation).
   document.addEventListener("keydown", (e) => {
     const typing = /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName);
     if (typing || e.ctrlKey || e.altKey || e.metaKey) return;
@@ -275,10 +248,20 @@
     else if (k === "r") { e.preventDefault(); speakStatus(); }
   });
 
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-    announce("This browser cannot capture the screen. Please use Microsoft Edge or Google Chrome.");
-    startBtn.disabled = true;
+  function init() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+      statusEl.textContent = "This browser cannot capture the screen. Please use Microsoft Edge or Google Chrome.";
+      announce("This browser cannot capture the screen. Please open this page in Microsoft Edge or Google Chrome.");
+      startBtn.disabled = true;
+      return;
+    }
+    // Put the user ON the Start button so the screen reader announces it and Enter just works.
+    focusControl(startBtn);
+    announce("MeetingLens is ready. The Start button is selected. Press Enter to begin. Your browser will then ask what to share — choose Entire Screen, then choose Share.");
   }
+
+  // Delay slightly so the screen reader settles on the page before we set focus and speak.
+  window.addEventListener("load", () => setTimeout(init, 400));
 })();
 </script>
 </body>
