@@ -47,7 +47,9 @@
   <h1>MeetingLens</h1>
   <p class="lead">Capture a meeting's slides and shared screens, then get a screen-reader-friendly summary from Copilot. Everything you need to do is spoken aloud, and the right button is always selected for you — just press <kbd>Enter</kbd> when prompted.</p>
 
-  <div id="status" class="status">Loading…</div>
+  <!-- Announcements go here. aria-live="polite" lets the user's OWN screen reader speak them,
+       in her voice and speed, so the app never talks over the screen reader. -->
+  <div id="status" class="status" role="status" aria-live="polite" aria-atomic="true">Loading…</div>
 
   <div class="card">
     <div class="row">
@@ -56,6 +58,7 @@
       <button id="stopBtn" type="button" class="stop" aria-describedby="stopHelp" disabled>
         <span aria-hidden="true">■ </span>Stop and make summary</button>
     </div>
+    <p class="help"><label><input type="checkbox" id="speakAloud" /> Also speak announcements aloud — turn this on <strong>only if you do not use a screen reader</strong> (if you use one, leave it off so the two voices don't overlap).</label></p>
     <p class="help" id="startHelp">Press Enter to begin. Your browser opens its own share box (spoken by your screen reader): press <kbd>Tab</kbd> until you hear <strong>Entire Screen</strong>, select it, then <kbd>Tab</kbd> to <strong>Share</strong> and press <kbd>Enter</kbd>.</p>
     <p class="help" id="stopHelp">When your meeting ends, this button is selected — press Enter to stop and prepare your summary.</p>
     <p class="help"><label for="interval">Seconds between screenshots</label>
@@ -75,7 +78,8 @@
 
   <div class="card" id="handoffCard" style="display:none">
     <h2 style="margin-top:0;font-size:1.2rem">Send it to Copilot</h2>
-    <p><a id="copilotLink" class="btnlink" target="_blank" rel="noopener" href="https://copilot.microsoft.com">Open Copilot in a new tab</a></p>
+    <p><a id="copilotLink" class="btnlink" target="_blank" rel="noopener" aria-describedby="copilotHelp" href="https://copilot.microsoft.com">Open Copilot in a new tab</a></p>
+    <p class="help" id="copilotHelp">This button is selected — press Enter to open Copilot, then paste the prompt with Ctrl+V and attach the screenshots from your Downloads folder.</p>
     <p class="help">Your prompt is copied to the clipboard. In Copilot, paste it with <kbd>Ctrl</kbd>+<kbd>V</kbd> and attach the screenshots from your Downloads folder. If pasting doesn't work, copy it from the box below (<kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>C</kbd>).</p>
     <textarea id="promptBox" readonly aria-label="Your Copilot prompt to paste"></textarea>
   </div>
@@ -116,6 +120,7 @@
   const handoffCard = document.getElementById("handoffCard");
   const promptBox = document.getElementById("promptBox");
   const copilotLink = document.getElementById("copilotLink");
+  const speakAloud = document.getElementById("speakAloud");
   const urlInput = document.getElementById("copilotUrl");
   const applyBtn = document.getElementById("applyBtn");
   const saveCopyBtn = document.getElementById("saveCopyBtn");
@@ -128,9 +133,14 @@
   let copilotUrl = (document.body.getAttribute("data-copilot-url") || DEFAULT_URL).trim() || DEFAULT_URL;
 
   function announce(text) {
+    // The screen reader reads this automatically (the container is aria-live="polite"),
+    // in the user's own voice and speed. We only ALSO use the browser's speech engine when
+    // the user has opted in (no screen reader), so the two voices never overlap.
     statusEl.textContent = text;
-    try { const u = new SpeechSynthesisUtterance(text); window.speechSynthesis.cancel(); window.speechSynthesis.speak(u); }
-    catch (e) {}
+    if (speakAloud && speakAloud.checked) {
+      try { const u = new SpeechSynthesisUtterance(text); window.speechSynthesis.cancel(); window.speechSynthesis.speak(u); }
+      catch (e) {}
+    }
   }
   function focusControl(el) { try { el.focus(); } catch (e) {} }
   function intervalMs() { const n = parseInt(intervalInput.value, 10); return (Number.isFinite(n) && n >= 5 ? n : 45) * 1000; }
