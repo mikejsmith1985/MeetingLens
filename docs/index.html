@@ -44,6 +44,7 @@
 </style>
 </head>
 <body data-copilot-url="https://copilot.microsoft.com" data-change-sensitivity="10" data-output-format="pdf">
+  <main aria-label="MeetingLens">
   <h1>MeetingLens</h1>
   <p class="lead">Capture a meeting's slides and shared screens, then get a screen-reader-friendly summary from Copilot. Everything you need to do is spoken aloud, and the right button is always selected for you — just press <kbd>Enter</kbd> when prompted.</p>
 
@@ -53,9 +54,9 @@
 
   <div class="card">
     <div class="row">
-      <button id="startBtn" type="button" aria-describedby="startHelp">
+      <button id="startBtn" type="button" aria-label="Start capture" aria-describedby="startHelp">
         <span aria-hidden="true">▶ </span>Start capture</button>
-      <button id="stopBtn" type="button" class="stop" aria-describedby="stopHelp" disabled>
+      <button id="stopBtn" type="button" class="stop" aria-label="Stop and make summary" aria-describedby="stopHelp" disabled>
         <span aria-hidden="true">■ </span>Stop and make summary</button>
     </div>
     <p class="help"><label><input type="checkbox" id="speakAloud" /> Also speak announcements aloud — turn this on <strong>only if you do not use a screen reader</strong> (if you use one, leave it off so the two voices don't overlap).</label></p>
@@ -79,7 +80,7 @@
 
   <div class="card" id="handoffCard" style="display:none">
     <h2 style="margin-top:0;font-size:1.2rem">Send it to Copilot</h2>
-    <p><a id="copilotLink" class="btnlink" target="_blank" rel="noopener" aria-describedby="copilotHelp" href="https://copilot.microsoft.com">Open Copilot in a new tab</a></p>
+    <p><a id="copilotLink" class="btnlink" target="_blank" rel="noopener" aria-label="Open Copilot in a new tab" aria-describedby="copilotHelp" href="https://copilot.microsoft.com">Open Copilot in a new tab</a></p>
     <p class="help" id="copilotHelp">This button is selected — press Enter to open Copilot, then paste the prompt with Ctrl+V and attach the single file MeetingLens just saved to your Downloads folder.</p>
     <p class="help">Your prompt is copied to the clipboard. In Copilot, paste it with <kbd>Ctrl</kbd>+<kbd>V</kbd> and attach the single file MeetingLens just saved to your Downloads folder. If pasting doesn't work, copy the prompt from the box below (<kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>C</kbd>).</p>
     <textarea id="promptBox" readonly aria-label="Your Copilot prompt to paste"></textarea>
@@ -90,7 +91,7 @@
     <label for="notes">Paste Copilot's summary here, then press the Save button.</label>
     <textarea id="notes" aria-describedby="saveHelp" placeholder="Paste the summary from Copilot here…"></textarea>
     <p class="help" id="saveHelp">Tab once to reach the Save button, then press Enter to save the summary as a file.</p>
-    <p><button id="saveBtn" type="button"><span aria-hidden="true">💾 </span>Save notes to a file</button></p>
+    <p><button id="saveBtn" type="button" aria-label="Save notes to a file"><span aria-hidden="true">💾 </span>Save notes to a file</button></p>
   </div>
 
   <div class="card setup">
@@ -117,6 +118,7 @@
     </p>
   </div>
 
+  </main>
   <video id="preview" playsinline muted style="display:none"></video>
   <canvas id="canvas" style="display:none"></canvas>
   <canvas id="smallCanvas" style="display:none"></canvas>
