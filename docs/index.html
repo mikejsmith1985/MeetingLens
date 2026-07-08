@@ -56,7 +56,7 @@
       <button id="stopBtn" type="button" class="stop" aria-describedby="stopHelp" disabled>
         <span aria-hidden="true">■ </span>Stop and make summary</button>
     </div>
-    <p class="help" id="startHelp">Press Enter to begin capturing. Your browser will ask what to share — choose <strong>Entire Screen</strong>, then <strong>Share</strong>.</p>
+    <p class="help" id="startHelp">Press Enter to begin. Your browser opens its own share box (spoken by your screen reader): press <kbd>Tab</kbd> until you hear <strong>Entire Screen</strong>, select it, then <kbd>Tab</kbd> to <strong>Share</strong> and press <kbd>Enter</kbd>.</p>
     <p class="help" id="stopHelp">When your meeting ends, this button is selected — press Enter to stop and prepare your summary.</p>
     <p class="help"><label for="interval">Seconds between screenshots</label>
       <input id="interval" type="number" min="5" max="600" value="45" /></p>
@@ -66,7 +66,7 @@
     <h2 style="margin-top:0;font-size:1.2rem">What happens, step by step</h2>
     <ol>
       <li>The <strong>Start</strong> button is already selected. Press <kbd>Enter</kbd>.</li>
-      <li>Your browser asks what to share. Choose <strong>Entire Screen</strong>, then <strong>Share</strong>.</li>
+      <li>Your browser opens a share box (read aloud by your screen reader). Press <kbd>Tab</kbd> until you hear <strong>Entire Screen</strong>, select it, then <kbd>Tab</kbd> to <strong>Share</strong> and press <kbd>Enter</kbd>.</li>
       <li>Go to your meeting. MeetingLens takes screenshots on its own and says each one aloud.</li>
       <li>When the meeting ends, come back to this tab. The <strong>Stop</strong> button is selected — press <kbd>Enter</kbd>.</li>
       <li>An <strong>Open Copilot</strong> button is then selected — press <kbd>Enter</kbd> to open Copilot, paste the prompt, and attach the screenshots.</li>
@@ -161,12 +161,15 @@
 
   async function start() {
     if (stream) { announce("Already recording. " + count + " screenshots taken so far."); return; }
-    announce("Starting. Your browser will now ask what to share. Choose Entire Screen, then choose Share.");
+    // Do not speak here: the browser's share dialog opens now and the user's screen reader
+    // will announce it. Talking over it would collide. displaySurface hints the picker to
+    // default to the whole screen so there is less to navigate.
     try {
-      stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 1 }, audio: false });
+      stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { displaySurface: "monitor", frameRate: 1 }, audio: false });
     } catch (e) {
       focusControl(startBtn);
-      announce("Screen sharing was not started. The Start button is selected again. Press Enter to try, and choose Entire Screen, then Share.");
+      announce("Screen sharing was cancelled. The Start button is selected again. Press Enter to try again. In the share box, press Tab until you hear Entire Screen, select it, then Tab to the Share button and press Enter.");
       return;
     }
     video.srcObject = stream;
@@ -183,10 +186,10 @@
   function buildPrompt(n, secs) {
     const noun = n === 1 ? "screenshot" : "screenshots";
     return "I'm attaching " + n + " " + noun + " taken every " + secs +
-      " seconds during a meeting. My colleague is blind and this is her only record of what was " +
-      "shown visually. Please describe each distinct slide or screen in order, including all visible " +
-      "text, bullet points, chart descriptions, names, dates, and action items. End with a summary of " +
-      "key takeaways and any action items with owners.";
+      " seconds during a meeting I attended. I'm visually impaired, and these screenshots are my only " +
+      "record of what was shown on screen. Please describe each distinct slide or screen in order, " +
+      "including all visible text, bullet points, chart descriptions, names, dates, and action items. " +
+      "End with a summary of the key takeaways and any action items with their owners.";
   }
 
   async function copyText(text) {
@@ -295,7 +298,7 @@
       startBtn.disabled = true; return;
     }
     focusControl(startBtn);
-    announce("MeetingLens is ready. The Start button is selected. Press Enter to begin. Your browser will then ask what to share — choose Entire Screen, then choose Share.");
+    announce("MeetingLens is ready. The Start button is selected. When you press Enter, your browser will ask what to share. In that box, press Tab until your screen reader says Entire Screen, select it, then press Tab to reach the Share button and press Enter. Capturing will then begin. Press Enter now to start.");
   }
 
   window.addEventListener("load", () => setTimeout(init, 400));
