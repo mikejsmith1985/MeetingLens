@@ -19,6 +19,27 @@ Python. On first run MeetingLens speaks: *"MeetingLens is ready. Press Control A
 recording. Press Control Alt X to stop."* and quietly writes an editable `config.txt` next to
 itself in case you ever want to change a hotkey.
 
+## No-exe edition (locked-down PCs): `meetinglens.ps1`
+
+If your workplace blocks downloading `.exe` files, use the PowerShell edition — a single text
+script with the **same behaviour, including real global hotkeys** (it uses only .NET and the
+Windows speech engine, nothing to install).
+
+**Run it** in Windows PowerShell (`powershell.exe`), one of:
+
+```powershell
+# A) paste-and-run straight from GitHub (nothing saved to disk):
+irm https://raw.githubusercontent.com/mikejsmith1985/MeetingLens/main/meetinglens.ps1 | iex
+
+# B) or save meetinglens.ps1 anywhere and run it:
+powershell -ExecutionPolicy Bypass -File meetinglens.ps1
+```
+
+Same hotkeys as below. To stop it, press `Ctrl+Alt+Q`. If your PC enforces *Constrained Language
+Mode* (some corporate machines do), the script cannot register global hotkeys — use the web
+edition instead. Quick self-check: `powershell -File meetinglens.ps1 -SelfTest` prints a report
+and exits without registering anything.
+
 ## Hotkeys
 
 | Action | Hotkey |
