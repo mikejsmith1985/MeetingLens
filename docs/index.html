@@ -43,7 +43,7 @@
   .setup { background: #f8fafc; border-style: dashed; }
 </style>
 </head>
-<body data-copilot-url="https://copilot.microsoft.com">
+<body data-copilot-url="https://copilot.microsoft.com" data-change-sensitivity="10">
   <h1>MeetingLens</h1>
   <p class="lead">Capture a meeting's slides and shared screens, then get a screen-reader-friendly summary from Copilot. Everything you need to do is spoken aloud, and the right button is always selected for you — just press <kbd>Enter</kbd> when prompted.</p>
 
@@ -95,11 +95,19 @@
 
   <div class="card setup">
     <h2 style="margin-top:0;font-size:1.2rem">Setup — for the person configuring this</h2>
-    <p class="help">If your organisation uses a specific Copilot web address, paste it here, then click <strong>Save a copy to send</strong>. That downloads a MeetingLens file with your address built in — send <em>that</em> file to the person who will use it. Your address stays on your computer and in the file you send.</p>
+    <p class="help">Set your organisation's Copilot web address and the screen-change sensitivity, then click <strong>Save a copy to send</strong>. That downloads a MeetingLens file with your settings built in — send <em>that</em> file to the person who will use it. Your settings stay on your computer and in the file you send; nothing is uploaded anywhere.</p>
     <p><label for="copilotUrl">Copilot web address</label>
       <input id="copilotUrl" type="url" inputmode="url" spellcheck="false" placeholder="https://copilot.microsoft.com" /></p>
+    <p><label for="sensitivity">Screen-change sensitivity (how much the screen must change before a shot is taken)</label>
+      <select id="sensitivity">
+        <option value="25">Very low — only big changes (fewest shots)</option>
+        <option value="16">Low</option>
+        <option value="10">Medium — recommended</option>
+        <option value="7">High</option>
+        <option value="4">Very high — catch small changes (most shots)</option>
+      </select></p>
     <p class="row">
-      <button id="applyBtn" type="button" style="min-width:12rem">Use this address now</button>
+      <button id="applyBtn" type="button" style="min-width:12rem">Use these settings now</button>
       <button id="saveCopyBtn" type="button" style="min-width:16rem"><span aria-hidden="true">📄 </span>Save a copy to send</button>
     </p>
   </div>
@@ -124,6 +132,7 @@
   const copilotLink = document.getElementById("copilotLink");
   const speakAloud = document.getElementById("speakAloud");
   const urlInput = document.getElementById("copilotUrl");
+  const sensitivity = document.getElementById("sensitivity");
   const applyBtn = document.getElementById("applyBtn");
   const saveCopyBtn = document.getElementById("saveCopyBtn");
   const smartMode = document.getElementById("smartMode");
@@ -132,11 +141,12 @@
   const smallCanvas = document.getElementById("smallCanvas");
 
   // Change-detection tuning: poll often, but never shoot more than once per MIN_GAP, and only
-  // when the downscaled frame differs from the last captured slide by more than THRESHOLD.
-  const POLL_MS = 3000, MIN_GAP_MS = 8000, CHANGE_THRESHOLD = 10, SMALL_W = 32, SMALL_H = 18;
+  // when the downscaled frame differs from the last captured slide by more than the (configurable)
+  // threshold. Lower threshold = more sensitive.
+  const POLL_MS = 3000, MIN_GAP_MS = 8000, SMALL_W = 32, SMALL_H = 18, DEFAULT_THRESHOLD = 10;
 
   let stream = null, timer = null, count = 0, startedAt = 0, shots = [], keepAlive = null;
-  let lastCapturedSmall = null, lastCaptureTime = 0;
+  let lastCapturedSmall = null, lastCaptureTime = 0, changeThreshold = DEFAULT_THRESHOLD;
   // The Copilot address is read from the page itself (data-copilot-url), so a configured
   // copy carries it in the file — no server, no storage, nothing shared externally.
   let copilotUrl = (document.body.getAttribute("data-copilot-url") || DEFAULT_URL).trim() || DEFAULT_URL;
@@ -204,7 +214,7 @@
       cnt += 3;
     }
     const meanDiff = sum / cnt;
-    if (meanDiff > CHANGE_THRESHOLD && (Date.now() - lastCaptureTime) > MIN_GAP_MS) captureFrame();
+    if (meanDiff > changeThreshold && (Date.now() - lastCaptureTime) > MIN_GAP_MS) captureFrame();
   }
 
   // Build a single PDF with one screenshot per page (JPEG embedded via DCTDecode). Pure bytes,
@@ -264,6 +274,7 @@
     stream.getVideoTracks()[0].addEventListener("ended", () => { if (stream) stop(); });
     count = 0; shots = []; startedAt = Date.now();
     lastCapturedSmall = null; lastCaptureTime = 0;
+    changeThreshold = parseInt(sensitivity.value, 10) || DEFAULT_THRESHOLD;
     startBtn.disabled = true; stopBtn.disabled = false;
     startKeepAlive();
     if (smartMode.checked) {
@@ -345,39 +356,47 @@
     announce("Your meeting notes have been saved to your Downloads folder.");
   }
 
-  // --- setup: configure the Copilot address and export a ready-to-send copy ---
-  function applyUrl() {
+  // --- setup: configure the Copilot address + sensitivity and export a ready-to-send copy ---
+  function applySettings() {
     const url = (urlInput.value || "").trim() || DEFAULT_URL;
     copilotUrl = url; copilotLink.href = url;
+    changeThreshold = parseInt(sensitivity.value, 10) || DEFAULT_THRESHOLD;
     document.body.setAttribute("data-copilot-url", url);
-    announce("This device will now use that Copilot address.");
+    document.body.setAttribute("data-change-sensitivity", sensitivity.value);
+    announce("Settings applied on this device.");
   }
 
   function buildConfiguredHtml(url) {
-    // Serialize a clean clone (not the live, mutated page) with the address baked in.
+    // Serialize a clean clone (not the live, mutated page) with the settings baked in.
     const clone = document.documentElement.cloneNode(true);
-    clone.querySelector("body").setAttribute("data-copilot-url", url);
     const q = (sel) => clone.querySelector(sel);
+    clone.querySelector("body").setAttribute("data-copilot-url", url);
+    clone.querySelector("body").setAttribute("data-change-sensitivity", sensitivity.value);
     q("#status").textContent = "Loading…";
     q("#startBtn").removeAttribute("disabled");
     q("#stopBtn").setAttribute("disabled", "");
     q("#handoffCard").setAttribute("style", "display:none");
     q("#copilotUrl").setAttribute("value", url);
+    // Reflect the chosen sensitivity as the option's selected attribute so the copy opens with it.
+    clone.querySelectorAll("#sensitivity option").forEach((opt) => {
+      if (opt.value === sensitivity.value) opt.setAttribute("selected", "selected");
+      else opt.removeAttribute("selected");
+    });
     return "<!doctype html>\n" + clone.outerHTML;
   }
 
   function saveCopy() {
     const url = (urlInput.value || "").trim() || DEFAULT_URL;
-    applyUrl();
+    applySettings();
     downloadBlob(new Blob([buildConfiguredHtml(url)], { type: "text/html" }), "MeetingLens.html");
-    announce("Saved. A copy of MeetingLens with your Copilot address has downloaded to your Downloads folder. Send that file to the person who will use it.");
+    announce("Saved. A copy of MeetingLens with your settings has downloaded to your Downloads folder. Send that file to the person who will use it.");
   }
 
   startBtn.addEventListener("click", start);
   stopBtn.addEventListener("click", stop);
   saveBtn.addEventListener("click", saveNotes);
   smartMode.addEventListener("change", () => { intervalInput.disabled = smartMode.checked; });
-  applyBtn.addEventListener("click", applyUrl);
+  applyBtn.addEventListener("click", applySettings);
   saveCopyBtn.addEventListener("click", saveCopy);
 
   document.addEventListener("keydown", (e) => {
@@ -392,6 +411,9 @@
   function init() {
     urlInput.value = copilotUrl;
     copilotLink.href = copilotUrl;
+    // Restore the configured sensitivity (baked into the file or default).
+    const savedSens = document.body.getAttribute("data-change-sensitivity");
+    if (savedSens) { sensitivity.value = savedSens; changeThreshold = parseInt(savedSens, 10) || DEFAULT_THRESHOLD; }
     if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
       statusEl.textContent = "This browser cannot capture the screen. Please use Microsoft Edge or Google Chrome.";
       announce("This browser cannot capture the screen. Please open this page in Microsoft Edge or Google Chrome.");
