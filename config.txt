@@ -1,0 +1,11 @@
+# MeetingLens configuration — edit in Notepad, then restart MeetingLens.
+# Time between screenshots, in seconds.
+interval_seconds=45
+# Global hotkeys (work even when Teams/Zoom/Edge has focus).
+hotkey_start=Ctrl+Alt+S
+hotkey_stop=Ctrl+Alt+X
+hotkey_status=Ctrl+Alt+R
+hotkey_save=Ctrl+Alt+W
+hotkey_quit=Ctrl+Alt+Q
+# Where the summary is generated (opened in your browser on stop).
+ai_chat_url=https://copilot.microsoft.com

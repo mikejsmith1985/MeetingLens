@@ -1,0 +1,47 @@
+# Project metadata, packaging, and tool configuration for MeetingLens.
+[project]
+name = "meetinglens"
+version = "1.0.0"
+description = "Accessible, audio-first meeting screenshot capture tool for blind users"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "keyboard>=0.13.5",
+    "pyttsx3>=2.90",
+    "Pillow>=10.0.0",
+    "pystray>=0.19.0",
+    "pyperclip>=1.8.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0", "ruff>=0.4.0", "black>=24.0.0"]
+
+[project.scripts]
+meetinglens = "meetinglens.__main__:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
+pythonpath = ["src"]
+testpaths = ["tests"]
+markers = [
+    "unit: fast, fully-mocked tests (<10ms each)",
+    "integration: tests that exercise real Windows APIs",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B"]

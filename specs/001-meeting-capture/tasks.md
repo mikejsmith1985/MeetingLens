@@ -29,11 +29,11 @@ Single-project desktop app: source in `src/meetinglens/`, tests in `tests/unit/`
 
 **Purpose**: Project skeleton and tooling.
 
-- [ ] T001 Create project structure: `src/meetinglens/`, `src/meetinglens/adapters/`, `tests/unit/`, `tests/integration/`, `build/` with `__init__.py` files
-- [ ] T002 Create `requirements.txt` (keyboard, pyttsx3, Pillow, pystray, pyperclip, pytest) and `pyproject.toml` with pytest config (markers: `unit`, `integration`)
-- [ ] T003 [P] Configure lint/format (ruff + black) in `pyproject.toml` and add `.gitignore` for `build/`, `dist/`, `__pycache__/`
-- [ ] T004 [P] Add shipped default `config.txt` at repo root per `contracts/config-schema.md`
-- [ ] T005 [P] Create `CHANGELOG.md` at repo root with an "Unreleased" section (Article VI)
+- [X] T001 Create project structure: `src/meetinglens/`, `src/meetinglens/adapters/`, `tests/unit/`, `tests/integration/`, `build/` with `__init__.py` files
+- [X] T002 Create `requirements.txt` (keyboard, pyttsx3, Pillow, pystray, pyperclip, pytest) and `pyproject.toml` with pytest config (markers: `unit`, `integration`)
+- [X] T003 [P] Configure lint/format (ruff + black) in `pyproject.toml` and add `.gitignore` for `build/`, `dist/`, `__pycache__/`
+- [X] T004 [P] Add shipped default `config.txt` at repo root per `contracts/config-schema.md`
+- [X] T005 [P] Create `CHANGELOG.md` at repo root with an "Unreleased" section (Article VI)
 
 ---
 
@@ -43,19 +43,19 @@ Single-project desktop app: source in `src/meetinglens/`, tests in `tests/unit/`
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T006 [P] Unit test config parse + defaults in `tests/unit/test_config.py` (key=value, comments, missing/invalid → defaults) — write to FAIL
-- [ ] T007 Implement `Config` model + loader in `src/meetinglens/config.py` per `data-model.md` and `contracts/config-schema.md` (FR-022) (depends on T006)
-- [ ] T008 [P] Implement `SpeechAdapter` (offline pyttsx3/SAPI5, dedicated worker thread + queue, non-blocking) in `src/meetinglens/adapters/speech.py` (FR-026)
-- [ ] T009 [P] Implement `ScreenCaptureAdapter` (Pillow `ImageGrab`, primary display, returns success/failure so callers can skip) in `src/meetinglens/adapters/capture.py`
-- [ ] T010 [P] Implement `HotkeyAdapter` (keyboard, global registration, reports per-action registration failure) in `src/meetinglens/adapters/hotkeys.py`
-- [ ] T011 [P] Implement `ClipboardAdapter` (pyperclip read/write, empty-detection) in `src/meetinglens/adapters/clipboard.py`
-- [ ] T012 [P] Implement `TrayAdapter` (pystray recording/idle indicator + Exit item) in `src/meetinglens/adapters/tray.py`
-- [ ] T013 [P] Implement `LauncherAdapter` (open browser URL, open folder in Explorer, open file in Notepad via `webbrowser`/`os.startfile`) in `src/meetinglens/adapters/launcher.py`
-- [ ] T014 [P] Create spoken-message catalog constants in `src/meetinglens/messages.py` per `contracts/spoken-messages.md`
-- [ ] T015 [P] Create mocked/fake adapter fixtures in `tests/conftest.py` (fake speech records spoken text; fake capture/clipboard/launcher record calls)
-- [ ] T016 [P] Integration tests for adapters in `tests/integration/test_adapters.py` (speech speaks, capture writes a real PNG, clipboard round-trips, launcher opens targets) — real Windows APIs
-- [ ] T017 Implement `AppController` skeleton (adapter dependency injection, speech-worker wiring, hotkey → action routing table for start/stop/status/save/**quit**, shared session lock) in `src/meetinglens/app.py` (FR-001, FR-002, FR-006) (depends on T008–T014)
-- [ ] T018 Implement entry point `src/meetinglens/__main__.py`: load config, wire adapters, register the **five** global hotkeys, wire **quit** (stop any session → speak `QUIT` → exit), speak `READY` naming start/stop (FR-004, FR-005, FR-028), start tray loop (depends on T007, T017)
+- [X] T006 [P] Unit test config parse + defaults in `tests/unit/test_config.py` (key=value, comments, missing/invalid → defaults) — write to FAIL
+- [X] T007 Implement `Config` model + loader in `src/meetinglens/config.py` per `data-model.md` and `contracts/config-schema.md` (FR-022) (depends on T006)
+- [X] T008 [P] Implement `SpeechAdapter` (offline pyttsx3/SAPI5, dedicated worker thread + queue, non-blocking) in `src/meetinglens/adapters/speech.py` (FR-026)
+- [X] T009 [P] Implement `ScreenCaptureAdapter` (Pillow `ImageGrab`, primary display, returns success/failure so callers can skip) in `src/meetinglens/adapters/capture.py`
+- [X] T010 [P] Implement `HotkeyAdapter` (keyboard, global registration, reports per-action registration failure) in `src/meetinglens/adapters/hotkeys.py`
+- [X] T011 [P] Implement `ClipboardAdapter` (pyperclip read/write, empty-detection) in `src/meetinglens/adapters/clipboard.py`
+- [X] T012 [P] Implement `TrayAdapter` (pystray recording/idle indicator + Exit item) in `src/meetinglens/adapters/tray.py`
+- [X] T013 [P] Implement `LauncherAdapter` (open browser URL, open folder in Explorer, open file in Notepad via `webbrowser`/`os.startfile`) in `src/meetinglens/adapters/launcher.py`
+- [X] T014 [P] Create spoken-message catalog constants in `src/meetinglens/messages.py` per `contracts/spoken-messages.md`
+- [X] T015 [P] Create mocked/fake adapter fixtures in `tests/conftest.py` (fake speech records spoken text; fake capture/clipboard/launcher record calls)
+- [X] T016 [P] Integration tests for adapters in `tests/integration/test_adapters.py` (speech speaks, capture writes a real PNG, clipboard round-trips, launcher opens targets) — real Windows APIs
+- [X] T017 Implement `AppController` skeleton (adapter dependency injection, speech-worker wiring, hotkey → action routing table for start/stop/status/save/**quit**, shared session lock) in `src/meetinglens/app.py` (FR-001, FR-002, FR-006) (depends on T008–T014)
+- [X] T018 Implement entry point `src/meetinglens/__main__.py`: load config, wire adapters, register the **five** global hotkeys, wire **quit** (stop any session → speak `QUIT` → exit), speak `READY` naming start/stop (FR-004, FR-005, FR-028), start tray loop (depends on T007, T017)
 
 **Checkpoint**: App launches, speaks readiness, tray visible, hotkeys registered — user stories can now begin.
 
@@ -67,13 +67,13 @@ Single-project desktop app: source in `src/meetinglens/`, tests in `tests/unit/`
 
 **Independent Test**: Start with `Ctrl+Alt+S` while a slideshow has focus, wait through several intervals, stop with `Ctrl+Alt+X`; hear start/each-capture/final-count speech and find one PNG per interval in `Desktop\MeetingCaptures\`.
 
-- [ ] T019 [P] [US1] Unit test `CaptureSession` state machine in `tests/unit/test_session.py` (idle↔recording, count only on success, already-recording guard, elapsed) — write to FAIL
-- [ ] T020 [US1] Implement `CaptureSession` (state, screenshot_count, started_at, interval, repeating capture timer, transitions) in `src/meetinglens/session.py` per `data-model.md` (FR-011) (depends on T019)
-- [ ] T021 [US1] Wire **start** action in `AppController` (idle→start: reset count, start timer, speak `START`; recording→speak `ALREADY_RECORDING`, no reset) in `src/meetinglens/app.py` (FR-008, FR-012)
-- [ ] T022 [US1] Wire interval **capture callback**: call capture adapter, on success save ordered PNG to captures folder + count++ + speak `CAPTURE`; on failure skip frame, no count change, session continues (FR-009, FR-010, FR-025) in `src/meetinglens/app.py` / `session.py`
-- [ ] T023 [US1] Wire **stop** action for capture: idle→speak `NOTHING_RECORDING`; recording→halt timer, speak `STOPPING` final count (handoff added in US2) in `src/meetinglens/app.py` (FR-015)
-- [ ] T024 [US1] Ensure captures folder auto-created on start if missing in `src/meetinglens/session.py` (FR-024)
-- [ ] T025 [P] [US1] Integration test capture flow in `tests/integration/test_capture.py` (start → real PNGs written per interval → stop; count matches file count)
+- [X] T019 [P] [US1] Unit test `CaptureSession` state machine in `tests/unit/test_session.py` (idle↔recording, count only on success, already-recording guard, elapsed) — write to FAIL
+- [X] T020 [US1] Implement `CaptureSession` (state, screenshot_count, started_at, interval, repeating capture timer, transitions) in `src/meetinglens/session.py` per `data-model.md` (FR-011) (depends on T019)
+- [X] T021 [US1] Wire **start** action in `AppController` (idle→start: reset count, start timer, speak `START`; recording→speak `ALREADY_RECORDING`, no reset) in `src/meetinglens/app.py` (FR-008, FR-012)
+- [X] T022 [US1] Wire interval **capture callback**: call capture adapter, on success save ordered PNG to captures folder + count++ + speak `CAPTURE`; on failure skip frame, no count change, session continues (FR-009, FR-010, FR-025) in `src/meetinglens/app.py` / `session.py`
+- [X] T023 [US1] Wire **stop** action for capture: idle→speak `NOTHING_RECORDING`; recording→halt timer, speak `STOPPING` final count (handoff added in US2) in `src/meetinglens/app.py` (FR-015)
+- [X] T024 [US1] Ensure captures folder auto-created on start if missing in `src/meetinglens/session.py` (FR-024)
+- [X] T025 [P] [US1] Integration test capture flow in `tests/integration/test_capture.py` (start → real PNGs written per interval → stop; count matches file count)
 
 **Checkpoint**: US1 fully functional and demoable as the MVP.
 
@@ -85,12 +85,12 @@ Single-project desktop app: source in `src/meetinglens/`, tests in `tests/unit/`
 
 **Independent Test**: With screenshots present, press `Ctrl+Alt+X`; clipboard holds the prompt with the correct count and interval, the browser opens the AI chat URL, the captures folder opens, and the `HANDOFF_OPEN`/`HANDOFF_READY` guidance is spoken.
 
-- [ ] T026 [P] [US2] Unit test prompt builder in `tests/unit/test_prompt.py` (asserts count, interval, ordered per-screen request, required content) per `contracts/prompt-template.md` — write to FAIL
-- [ ] T027 [US2] Implement `build_summarisation_prompt(count, interval)` in `src/meetinglens/prompt.py`, handling singular "screenshot" when count is 1 (FR-016, U2) (depends on T026)
-- [ ] T028 [P] [US2] Unit test handoff sequence in `tests/unit/test_handoff.py` (clipboard written, launcher opens URL + folder, spoken order STOPPING→HANDOFF_OPEN→HANDOFF_READY) — write to FAIL
-- [ ] T029 [US2] Implement `Handoff` in `src/meetinglens/handoff.py`: write prompt to clipboard, retain the exact prompt string as `AppController.last_handoff_prompt` (FR-027, feeds US3 save guard), open `ai_chat_url` + captures folder via launcher, enqueue `HANDOFF_OPEN`/`HANDOFF_READY` (FR-017) (depends on T027, T028)
-- [ ] T030 [US2] Extend **stop** action in `src/meetinglens/app.py` to invoke `Handoff` after `STOPPING` (FR-015–FR-018) (depends on T023, T029)
-- [ ] T031 [P] [US2] Integration test handoff in `tests/integration/test_handoff.py` (clipboard round-trip of real prompt; launcher invoked for URL + folder)
+- [X] T026 [P] [US2] Unit test prompt builder in `tests/unit/test_prompt.py` (asserts count, interval, ordered per-screen request, required content) per `contracts/prompt-template.md` — write to FAIL
+- [X] T027 [US2] Implement `build_summarisation_prompt(count, interval)` in `src/meetinglens/prompt.py`, handling singular "screenshot" when count is 1 (FR-016, U2) (depends on T026)
+- [X] T028 [P] [US2] Unit test handoff sequence in `tests/unit/test_handoff.py` (clipboard written, launcher opens URL + folder, spoken order STOPPING→HANDOFF_OPEN→HANDOFF_READY) — write to FAIL
+- [X] T029 [US2] Implement `Handoff` in `src/meetinglens/handoff.py`: write prompt to clipboard, retain the exact prompt string as `AppController.last_handoff_prompt` (FR-027, feeds US3 save guard), open `ai_chat_url` + captures folder via launcher, enqueue `HANDOFF_OPEN`/`HANDOFF_READY` (FR-017) (depends on T027, T028)
+- [X] T030 [US2] Extend **stop** action in `src/meetinglens/app.py` to invoke `Handoff` after `STOPPING` (FR-015–FR-018) (depends on T023, T029)
+- [X] T031 [P] [US2] Integration test handoff in `tests/integration/test_handoff.py` (clipboard round-trip of real prompt; launcher invoked for URL + folder)
 
 **Checkpoint**: US1 + US2 work independently; a captured session hands off to the AI unaided.
 
@@ -102,10 +102,10 @@ Single-project desktop app: source in `src/meetinglens/`, tests in `tests/unit/`
 
 **Independent Test**: Copy text, press `Ctrl+Alt+W` → timestamped `MeetingNotes_*.txt` on Desktop, opened in Notepad, `NOTES_SAVED` spoken. Clear clipboard, press again → `NOTHING_TO_SAVE`, no file. Immediately after a handoff (clipboard still holds the prompt), press `Ctrl+Alt+W` → `PROMPT_NOT_COPIED`, no file.
 
-- [ ] T032 [P] [US3] Unit test notes module in `tests/unit/test_notes.py` (timestamped filename format, empty-clipboard → no file, non-overwrite, **clipboard equals last handoff prompt → no file**) per `data-model.md` — write to FAIL
-- [ ] T033 [US3] Implement `save_notes(clipboard_text, last_handoff_prompt)` in `src/meetinglens/notes.py`: if text non-empty AND not equal to `last_handoff_prompt`, write `MeetingNotes_YYYY-MM-DD_HH-mm.txt` to notes folder and open in Notepad; otherwise write nothing (depends on T032) (FR-019, FR-020, FR-027)
-- [ ] T034 [US3] Wire **save** action in `src/meetinglens/app.py` passing `AppController.last_handoff_prompt` to `save_notes` (non-empty & not prompt→`NOTES_SAVED`; empty→`NOTHING_TO_SAVE`; equals prompt→`PROMPT_NOT_COPIED`; no file in the latter two; works in any session state) (FR-021, FR-027)
-- [ ] T035 [P] [US3] Integration test save-notes in `tests/integration/test_notes.py` (real file written with clipboard text and opened; empty clipboard writes nothing; clipboard holding the retained prompt writes nothing and speaks `PROMPT_NOT_COPIED`)
+- [X] T032 [P] [US3] Unit test notes module in `tests/unit/test_notes.py` (timestamped filename format, empty-clipboard → no file, non-overwrite, **clipboard equals last handoff prompt → no file**) per `data-model.md` — write to FAIL
+- [X] T033 [US3] Implement `save_notes(clipboard_text, last_handoff_prompt)` in `src/meetinglens/notes.py`: if text non-empty AND not equal to `last_handoff_prompt`, write `MeetingNotes_YYYY-MM-DD_HH-mm.txt` to notes folder and open in Notepad; otherwise write nothing (depends on T032) (FR-019, FR-020, FR-027)
+- [X] T034 [US3] Wire **save** action in `src/meetinglens/app.py` passing `AppController.last_handoff_prompt` to `save_notes` (non-empty & not prompt→`NOTES_SAVED`; empty→`NOTHING_TO_SAVE`; equals prompt→`PROMPT_NOT_COPIED`; no file in the latter two; works in any session state) (FR-021, FR-027)
+- [X] T035 [P] [US3] Integration test save-notes in `tests/integration/test_notes.py` (real file written with clipboard text and opened; empty clipboard writes nothing; clipboard holding the retained prompt writes nothing and speaks `PROMPT_NOT_COPIED`)
 
 **Checkpoint**: US1–US3 independently functional; full capture-to-notes loop closes.
 
@@ -117,12 +117,12 @@ Single-project desktop app: source in `src/meetinglens/`, tests in `tests/unit/`
 
 **Independent Test**: `Ctrl+Alt+R` speaks recording+count+elapsed during a session and idle otherwise; changing `interval_seconds` in `config.txt` and restarting changes cadence; an invalid value yields a spoken `CONFIG_WARNING` and the tool still starts on defaults.
 
-- [ ] T036 [P] [US4] Unit test status action in `tests/unit/test_status.py` (`STATUS_RECORDING` includes count + elapsed minutes; `STATUS_IDLE` when idle) — write to FAIL
-- [ ] T037 [US4] Wire **status** action in `src/meetinglens/app.py` (FR-013, FR-014) (depends on T036)
-- [ ] T038 [P] [US4] Unit test config graceful degradation in `tests/unit/test_config_defaults.py` (bad interval/hotkey → default + one warning) — write to FAIL
-- [ ] T039 [US4] Add config validation warnings (`CONFIG_WARNING`) in `src/meetinglens/config.py` and hotkey-registration-failure speech (`HOTKEY_FAILED`) in `src/meetinglens/app.py`/`__main__.py` (FR-007, FR-023) (depends on T038)
-- [ ] T040 [US4] Verify first-run `READY` names the start and stop hotkeys and add regression coverage in `tests/unit/test_status.py` (FR-004)
-- [ ] T041 [P] [US4] Integration test status + config reload in `tests/integration/test_status_config.py` (edit interval → restart → new cadence; malformed value → warning + defaults)
+- [X] T036 [P] [US4] Unit test status action in `tests/unit/test_status.py` (`STATUS_RECORDING` includes count + elapsed minutes; `STATUS_IDLE` when idle) — write to FAIL
+- [X] T037 [US4] Wire **status** action in `src/meetinglens/app.py` (FR-013, FR-014) (depends on T036)
+- [X] T038 [P] [US4] Unit test config graceful degradation in `tests/unit/test_config_defaults.py` (bad interval/hotkey → default + one warning) — write to FAIL
+- [X] T039 [US4] Add config validation warnings (`CONFIG_WARNING`) in `src/meetinglens/config.py` and hotkey-registration-failure speech (`HOTKEY_FAILED`) in `src/meetinglens/app.py`/`__main__.py` (FR-007, FR-023) (depends on T038)
+- [X] T040 [US4] Verify first-run `READY` names the start and stop hotkeys and add regression coverage in `tests/unit/test_status.py` (FR-004)
+- [X] T041 [P] [US4] Integration test status + config reload in `tests/integration/test_status_config.py` (edit interval → restart → new cadence; malformed value → warning + defaults)
 
 **Checkpoint**: All four user stories independently functional.
 
@@ -132,13 +132,13 @@ Single-project desktop app: source in `src/meetinglens/`, tests in `tests/unit/`
 
 **Purpose**: Packaging, docs, robustness, and full validation across stories.
 
-- [ ] T042 [P] Update `CHANGELOG.md` with v1 capabilities (Article VI)
-- [ ] T043 [P] Add PyInstaller one-folder build spec `build/meetinglens.spec` producing `MeetingLens.exe` + bundled `config.txt` (folder-drop, no terminal) per research Decision 9 (FR-003)
-- [ ] T044 Audit Article IV compliance across `src/meetinglens/` (file-purpose comments, doc comments on public functions, functions <40 lines, no magic numbers)
-- [ ] T045 [P] Robustness pass: long-session responsiveness (hundreds of screenshots), locked-screen skip verification, notes-folder auto-create (captures-folder auto-create is covered by T024) (FR-024, FR-025)
-- [ ] T046 Run `quickstart.md` end-to-end validation for all four stories and record evidence (Article X)
-- [ ] T047 [P] Verification test for **SC-002** (speech latency) in `tests/integration/test_latency.py`: assert every state-change message is enqueued and begins speaking within 2 seconds of its trigger under an active session
-- [ ] T048 [P] Verification test for **SC-003** (hotkey reliability) in `tests/integration/test_hotkey_reliability.py`: with a foreground app holding keyboard focus, fire each global hotkey many times and assert ≥99% are handled
+- [X] T042 [P] Update `CHANGELOG.md` with v1 capabilities (Article VI)
+- [X] T043 [P] Add PyInstaller one-folder build spec `build/meetinglens.spec` producing `MeetingLens.exe` + bundled `config.txt` (folder-drop, no terminal) per research Decision 9 (FR-003)
+- [X] T044 Audit Article IV compliance across `src/meetinglens/` (file-purpose comments, doc comments on public functions, functions <40 lines, no magic numbers)
+- [X] T045 [P] Robustness pass: long-session responsiveness (hundreds of screenshots), locked-screen skip verification, notes-folder auto-create (captures-folder auto-create is covered by T024) (FR-024, FR-025)
+- [X] T046 Run `quickstart.md` end-to-end validation for all four stories and record evidence (Article X)
+- [X] T047 [P] Verification test for **SC-002** (speech latency) in `tests/integration/test_latency.py`: assert every state-change message is enqueued and begins speaking within 2 seconds of its trigger under an active session
+- [X] T048 [P] Verification test for **SC-003** (hotkey reliability) in `tests/integration/test_hotkey_reliability.py`: with a foreground app holding keyboard focus, fire each global hotkey many times and assert ≥99% are handled
 
 ---
 
