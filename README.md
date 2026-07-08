@@ -6,11 +6,18 @@ no mouse required. It screenshots your primary screen on an interval during a ca
 hands the images off to Copilot with a ready-made prompt so you get a screen-reader-friendly
 summary of everything that was shown.
 
-## Install (end user)
+## Install (end user) — one file, no install
 
-Unzip the release and double-click `MeetingLens.exe`. No terminal, no Python. On first run
-it speaks: *"MeetingLens is ready. Press Control Alt S to start recording. Press Control Alt X
-to stop."*
+1. Download **`MeetingLens.exe`** from the [Releases page](../../releases/latest).
+2. Save it anywhere (your Desktop is fine).
+3. To keep it handy: press the Applications/Menu key on the file and choose **Pin to taskbar**.
+   Now it is always one keypress away.
+4. Press **Enter** on it (or click it) to run.
+
+That is the entire install — no unzip, no folder to open, no setup wizard, no terminal, no
+Python. On first run MeetingLens speaks: *"MeetingLens is ready. Press Control Alt S to start
+recording. Press Control Alt X to stop."* and quietly writes an editable `config.txt` next to
+itself in case you ever want to change a hotkey.
 
 ## Hotkeys
 
@@ -47,10 +54,12 @@ Architecture: pure domain modules (`session`, `config`, `prompt`, `notes`, `hand
 import nothing external; every OS/library touchpoint lives behind an adapter in
 `src/meetinglens/adapters/`. See `specs/001-meeting-capture/` for the full spec, plan, and tasks.
 
-## Build the distributable
+## Build & release the distributable
 
 ```powershell
 pip install pyinstaller
-pyinstaller build/meetinglens.spec
-# → dist/MeetingLens/  (zip and ship)
+pyinstaller build/meetinglens.spec        # → dist/MeetingLens.exe (single file)
+
+# Or build + publish a GitHub release with the exe attached (local pipeline only):
+./scripts/local-release.ps1 -Version v1.0.0
 ```

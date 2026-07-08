@@ -65,6 +65,29 @@ def test_missing_file_yields_defaults(tmp_path):
     assert result.interval_seconds == cfg.DEFAULT_INTERVAL_SECONDS
 
 
+def test_default_config_text_parses_without_warnings():
+    result = cfg.parse_config(cfg.DEFAULT_CONFIG_TEXT)
+    assert result.warnings == []
+    assert result.interval_seconds == cfg.DEFAULT_INTERVAL_SECONDS
+    assert result.hotkey_quit == cfg.DEFAULT_HOTKEY_QUIT
+    assert result.ai_chat_url == cfg.DEFAULT_AI_CHAT_URL
+
+
+def test_ensure_config_file_creates_when_missing(tmp_path):
+    path = str(tmp_path / "config.txt")
+    created = cfg.ensure_config_file(path)
+    assert created is True
+    assert cfg.load_config(path).interval_seconds == cfg.DEFAULT_INTERVAL_SECONDS
+
+
+def test_ensure_config_file_does_not_overwrite_existing(tmp_path):
+    path = tmp_path / "config.txt"
+    path.write_text("interval_seconds=99\n", encoding="utf-8")
+    created = cfg.ensure_config_file(str(path))
+    assert created is False
+    assert cfg.load_config(str(path)).interval_seconds == 99
+
+
 @pytest.mark.parametrize(
     "chord,expected",
     [

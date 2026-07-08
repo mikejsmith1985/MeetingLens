@@ -20,6 +20,22 @@ DEFAULT_HOTKEY_SAVE = "Ctrl+Alt+W"
 DEFAULT_HOTKEY_QUIT = "Ctrl+Alt+Q"
 DEFAULT_AI_CHAT_URL = "https://copilot.microsoft.com"
 
+# The full default config file, written next to the app on first run so a lone exe is
+# fully self-sufficient and the user can edit settings in Notepad later.
+DEFAULT_CONFIG_TEXT = """\
+# MeetingLens configuration — edit in Notepad, then restart MeetingLens.
+# Time between screenshots, in seconds.
+interval_seconds=45
+# Global hotkeys (work even when Teams/Zoom/Edge has focus).
+hotkey_start=Ctrl+Alt+S
+hotkey_stop=Ctrl+Alt+X
+hotkey_status=Ctrl+Alt+R
+hotkey_save=Ctrl+Alt+W
+hotkey_quit=Ctrl+Alt+Q
+# Where the summary is generated (opened in your browser on stop).
+ai_chat_url=https://copilot.microsoft.com
+"""
+
 _VALID_MODIFIERS = {"ctrl", "alt", "shift", "win"}
 
 
@@ -90,6 +106,25 @@ def load_config(path: str) -> Config:
             return parse_config(handle.read())
     except FileNotFoundError:
         return Config()
+
+
+def ensure_config_file(path: str) -> bool:
+    """Write the default config to ``path`` if none exists yet; return whether it was created.
+
+    Lets a single downloaded exe create its own editable config on first run, so the user
+    never has to place a file manually. Failure to write (e.g. a read-only folder) is not
+    fatal — the app still runs on built-in defaults.
+    """
+    import os
+
+    if os.path.exists(path):
+        return False
+    try:
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write(DEFAULT_CONFIG_TEXT)
+        return True
+    except OSError:
+        return False
 
 
 def _read_pairs(text: str) -> dict[str, str]:

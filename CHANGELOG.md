@@ -21,6 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Keyboard quit hotkey (`Ctrl+Alt+Q`) so the app can be closed without a mouse.
   - Plain-text `config.txt` for interval, all five hotkeys, and the AI chat URL, with
     graceful fallback to defaults and spoken warnings on bad values.
+  - **Single-file delivery**: ships as one self-contained `MeetingLens.exe` (PyInstaller
+    one-file) — download, pin to taskbar, press Enter. No unzip, no installer, no terminal.
+    The exe writes its own editable `config.txt` beside itself on first run.
+  - Local release script `scripts/local-release.ps1` builds the exe and publishes it as a
+    GitHub Release asset (local pipeline only, Article VIII).
 
 ### Changed
 

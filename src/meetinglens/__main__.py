@@ -12,15 +12,17 @@ import sys
 import time
 from datetime import datetime
 
-from . import config as config_module
-from .adapters.capture import ScreenCaptureAdapter
-from .adapters.clipboard import ClipboardAdapter
-from .adapters.hotkeys import HotkeyAdapter
-from .adapters.launcher import LauncherAdapter
-from .adapters.scheduler import RepeatingTimer
-from .adapters.speech import SpeechAdapter
-from .adapters.tray import TrayAdapter
-from .app import AppController
+# Absolute imports (not relative) so this module also works as PyInstaller's top-level
+# entry script, where there is no parent package for a relative import to resolve against.
+from meetinglens import config as config_module
+from meetinglens.adapters.capture import ScreenCaptureAdapter
+from meetinglens.adapters.clipboard import ClipboardAdapter
+from meetinglens.adapters.hotkeys import HotkeyAdapter
+from meetinglens.adapters.launcher import LauncherAdapter
+from meetinglens.adapters.scheduler import RepeatingTimer
+from meetinglens.adapters.speech import SpeechAdapter
+from meetinglens.adapters.tray import TrayAdapter
+from meetinglens.app import AppController
 
 _CONFIG_FILENAME = "config.txt"
 
@@ -50,7 +52,11 @@ def _resolve_folder(configured: str, default: str) -> str:
 
 def main() -> None:
     """Start MeetingLens: wire everything together and run until the user quits."""
-    config = config_module.load_config(_config_path())
+    config_path = _config_path()
+    if getattr(sys, "frozen", False):
+        # A lone downloaded exe writes its own editable config beside itself on first run.
+        config_module.ensure_config_file(config_path)
+    config = config_module.load_config(config_path)
     captures_folder = _resolve_folder(
         config.captures_folder, os.path.join(_desktop(), "MeetingCaptures")
     )
@@ -104,7 +110,7 @@ def _register_hotkeys(hotkeys, config, controller, speech) -> None:
     ]
     for chord, callback, action in bindings:
         if not hotkeys.register(chord, callback):
-            from . import messages
+            from meetinglens import messages
 
             speech.say(messages.hotkey_failed(action))
 
