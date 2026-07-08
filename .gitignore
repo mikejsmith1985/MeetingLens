@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+.eggs/
+
+# Build / packaging output
+build/*/
+dist/
+*.spec.bak
+
+# Test / tooling caches
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# App runtime artifacts (never commit a user's captures or notes)
+MeetingCaptures/
+MeetingNotes_*.txt

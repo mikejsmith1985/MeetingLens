@@ -1,0 +1,7 @@
+# MeetingLens runtime and test dependencies (Windows).
+keyboard>=0.13.5      # global hotkeys that fire regardless of focused window
+pyttsx3>=2.90         # offline SAPI5 text-to-speech (no internet required)
+Pillow>=10.0.0        # primary-screen capture via ImageGrab
+pystray>=0.19.0       # system-tray recording/idle indicator
+pyperclip>=1.8.2      # clipboard read/write
+pytest>=8.0.0         # unit and integration tests
