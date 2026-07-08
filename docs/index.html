@@ -61,8 +61,9 @@
     <p class="help"><label><input type="checkbox" id="speakAloud" /> Also speak announcements aloud — turn this on <strong>only if you do not use a screen reader</strong> (if you use one, leave it off so the two voices don't overlap).</label></p>
     <p class="help" id="startHelp">Press Enter to begin. Your browser opens its own share box (spoken by your screen reader): press <kbd>Tab</kbd> until you hear <strong>Entire Screen</strong>, select it, then <kbd>Tab</kbd> to <strong>Share</strong> and press <kbd>Enter</kbd>.</p>
     <p class="help" id="stopHelp">When your meeting ends, this button is selected — press Enter to stop and prepare your summary.</p>
-    <p class="help"><label for="interval">Seconds between screenshots</label>
-      <input id="interval" type="number" min="5" max="600" value="45" /></p>
+    <p class="help"><label><input type="checkbox" id="smartMode" checked /> Capture automatically when the screen changes (recommended — avoids duplicate shots of the same slide). Uncheck to capture on a fixed timer instead.</label></p>
+    <p class="help"><label for="interval">Seconds between screenshots (fixed-timer mode only)</label>
+      <input id="interval" type="number" min="5" max="600" value="90" disabled /></p>
   </div>
 
   <div class="card">
@@ -72,15 +73,15 @@
       <li>Your browser opens a share box (read aloud by your screen reader). Press <kbd>Tab</kbd> until you hear <strong>Entire Screen</strong>, select it, then <kbd>Tab</kbd> to <strong>Share</strong> and press <kbd>Enter</kbd>.</li>
       <li>Go to your meeting. MeetingLens takes screenshots on its own and says each one aloud.</li>
       <li>When the meeting ends, come back to this tab. The <strong>Stop</strong> button is selected — press <kbd>Enter</kbd>.</li>
-      <li>An <strong>Open Copilot</strong> button is then selected — press <kbd>Enter</kbd> to open Copilot, paste the prompt, and attach the screenshots.</li>
+      <li>An <strong>Open Copilot</strong> button is then selected — press <kbd>Enter</kbd> to open Copilot, paste the prompt, and attach the single <strong>MeetingCaptures.pdf</strong> from your Downloads folder.</li>
     </ol>
   </div>
 
   <div class="card" id="handoffCard" style="display:none">
     <h2 style="margin-top:0;font-size:1.2rem">Send it to Copilot</h2>
     <p><a id="copilotLink" class="btnlink" target="_blank" rel="noopener" aria-describedby="copilotHelp" href="https://copilot.microsoft.com">Open Copilot in a new tab</a></p>
-    <p class="help" id="copilotHelp">This button is selected — press Enter to open Copilot, then paste the prompt with Ctrl+V and attach the screenshots from your Downloads folder.</p>
-    <p class="help">Your prompt is copied to the clipboard. In Copilot, paste it with <kbd>Ctrl</kbd>+<kbd>V</kbd> and attach the screenshots from your Downloads folder. If pasting doesn't work, copy it from the box below (<kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>C</kbd>).</p>
+    <p class="help" id="copilotHelp">This button is selected — press Enter to open Copilot, then paste the prompt with Ctrl+V and attach the single file MeetingCaptures.pdf from your Downloads folder.</p>
+    <p class="help">Your prompt is copied to the clipboard. In Copilot, paste it with <kbd>Ctrl</kbd>+<kbd>V</kbd> and attach the single file <strong>MeetingCaptures.pdf</strong> from your Downloads folder. If pasting doesn't work, copy it from the box below (<kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>C</kbd>).</p>
     <textarea id="promptBox" readonly aria-label="Your Copilot prompt to paste"></textarea>
   </div>
 
@@ -105,6 +106,7 @@
 
   <video id="preview" playsinline muted style="display:none"></video>
   <canvas id="canvas" style="display:none"></canvas>
+  <canvas id="smallCanvas" style="display:none"></canvas>
 
 <script>
 (() => {
@@ -124,10 +126,17 @@
   const urlInput = document.getElementById("copilotUrl");
   const applyBtn = document.getElementById("applyBtn");
   const saveCopyBtn = document.getElementById("saveCopyBtn");
+  const smartMode = document.getElementById("smartMode");
   const video = document.getElementById("preview");
   const canvas = document.getElementById("canvas");
+  const smallCanvas = document.getElementById("smallCanvas");
+
+  // Change-detection tuning: poll often, but never shoot more than once per MIN_GAP, and only
+  // when the downscaled frame differs from the last captured slide by more than THRESHOLD.
+  const POLL_MS = 3000, MIN_GAP_MS = 8000, CHANGE_THRESHOLD = 10, SMALL_W = 32, SMALL_H = 18;
 
   let stream = null, timer = null, count = 0, startedAt = 0, shots = [], keepAlive = null;
+  let lastCapturedSmall = null, lastCaptureTime = 0;
   // The Copilot address is read from the page itself (data-copilot-url), so a configured
   // copy carries it in the file — no server, no storage, nothing shared externally.
   let copilotUrl = (document.body.getAttribute("data-copilot-url") || DEFAULT_URL).trim() || DEFAULT_URL;
@@ -161,12 +170,80 @@
     if (!w || !h) return;
     canvas.width = w; canvas.height = h;
     canvas.getContext("2d").drawImage(video, 0, 0, w, h);
+    lastCapturedSmall = smallSignature();   // baseline for change detection
+    lastCaptureTime = Date.now();
+    // JPEG so each frame can be embedded straight into a PDF page (one file, no 3-image limit).
     canvas.toBlob((blob) => {
       if (!blob) return;
-      count += 1;
-      shots.push({ name: "capture_" + String(count).padStart(3, "0") + ".png", blob });
-      announce("Screenshot " + count + " taken.");
-    }, "image/png");
+      blob.arrayBuffer().then((buf) => {
+        count += 1;
+        shots.push({ bytes: new Uint8Array(buf), w, h });
+        announce("Screenshot " + count + " taken.");
+      });
+    }, "image/jpeg", 0.85);
+  }
+
+  // A tiny downscaled snapshot of the current frame, used to detect when the screen changes.
+  function smallSignature() {
+    smallCanvas.width = SMALL_W; smallCanvas.height = SMALL_H;
+    const ctx = smallCanvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, SMALL_W, SMALL_H);
+    return ctx.getImageData(0, 0, SMALL_W, SMALL_H).data.slice();
+  }
+
+  // Called on a fast timer in smart mode: capture only when the slide has meaningfully changed.
+  function pollChange() {
+    if (!stream || !video.videoWidth) return;
+    if (lastCapturedSmall == null) { captureFrame(); return; }
+    const cur = smallSignature();
+    let sum = 0, cnt = 0;
+    for (let i = 0; i < cur.length; i += 4) {
+      sum += Math.abs(cur[i] - lastCapturedSmall[i]) +
+             Math.abs(cur[i + 1] - lastCapturedSmall[i + 1]) +
+             Math.abs(cur[i + 2] - lastCapturedSmall[i + 2]);
+      cnt += 3;
+    }
+    const meanDiff = sum / cnt;
+    if (meanDiff > CHANGE_THRESHOLD && (Date.now() - lastCaptureTime) > MIN_GAP_MS) captureFrame();
+  }
+
+  // Build a single PDF with one screenshot per page (JPEG embedded via DCTDecode). Pure bytes,
+  // no libraries. One document sidesteps Copilot's limit of 3 images per message.
+  function buildPdf(images) {
+    const enc = (s) => new TextEncoder().encode(s);
+    const parts = []; let len = 0; const offsets = {};
+    const push = (u8) => { parts.push(u8); len += u8.length; };
+    const pushStr = (s) => push(enc(s));
+    function obj(num, head, stream) {
+      offsets[num] = len;
+      pushStr(num + " 0 obj\n" + head);
+      if (stream) { pushStr("\nstream\n"); push(stream); pushStr("\nendstream"); }
+      pushStr("\nendobj\n");
+    }
+    pushStr("%PDF-1.4\n");
+    push(new Uint8Array([0x25, 0xE2, 0xE3, 0xCF, 0xD3, 0x0A])); // binary marker
+    const n = images.length;
+    const kids = [];
+    for (let i = 0; i < n; i++) kids.push((3 + i * 3) + " 0 R");
+    obj(1, "<< /Type /Catalog /Pages 2 0 R >>");
+    obj(2, "<< /Type /Pages /Kids [" + kids.join(" ") + "] /Count " + n + " >>");
+    for (let i = 0; i < n; i++) {
+      const img = images[i], pg = 3 + i * 3, ct = 4 + i * 3, im = 5 + i * 3;
+      const content = enc("q " + img.w + " 0 0 " + img.h + " 0 0 cm /Im0 Do Q");
+      obj(pg, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + img.w + " " + img.h +
+        "] /Resources << /XObject << /Im0 " + im + " 0 R >> >> /Contents " + ct + " 0 R >>");
+      obj(ct, "<< /Length " + content.length + " >>", content);
+      obj(im, "<< /Type /XObject /Subtype /Image /Width " + img.w + " /Height " + img.h +
+        " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + img.bytes.length + " >>", img.bytes);
+    }
+    const xrefOffset = len, maxObj = 2 + 3 * n;
+    let xref = "xref\n0 " + (maxObj + 1) + "\n0000000000 65535 f \n";
+    for (let num = 1; num <= maxObj; num++) xref += String(offsets[num]).padStart(10, "0") + " 00000 n \n";
+    pushStr(xref);
+    pushStr("trailer\n<< /Size " + (maxObj + 1) + " /Root 1 0 R >>\nstartxref\n" + xrefOffset + "\n%%EOF");
+    const out = new Uint8Array(len); let o = 0;
+    for (const p of parts) { out.set(p, o); o += p.length; }
+    return out;
   }
 
   async function start() {
@@ -186,20 +263,28 @@
     await video.play().catch(() => {});
     stream.getVideoTracks()[0].addEventListener("ended", () => { if (stream) stop(); });
     count = 0; shots = []; startedAt = Date.now();
+    lastCapturedSmall = null; lastCaptureTime = 0;
     startBtn.disabled = true; stopBtn.disabled = false;
     startKeepAlive();
-    timer = setInterval(captureFrame, intervalMs());
+    if (smartMode.checked) {
+      captureFrame();                                  // baseline shot of the first slide
+      timer = setInterval(pollChange, POLL_MS);        // then shoot only when the screen changes
+    } else {
+      timer = setInterval(captureFrame, intervalMs()); // fixed timer
+    }
     focusControl(stopBtn);
-    announce("Capture started. Screenshots are being taken automatically and read aloud. The Stop button is now selected. When your meeting ends, press Enter to stop and make your summary.");
+    announce(smartMode.checked
+      ? "Capture started. I'll take a screenshot automatically whenever the screen changes. The Stop button is now selected. When your meeting ends, press Enter to stop and make your summary."
+      : "Capture started. Screenshots are being taken every " + Math.round(intervalMs() / 1000) +
+        " seconds. The Stop button is now selected. When your meeting ends, press Enter to stop and make your summary.");
   }
 
-  function buildPrompt(n, secs) {
-    const noun = n === 1 ? "screenshot" : "screenshots";
-    return "I'm attaching " + n + " " + noun + " taken every " + secs +
-      " seconds during a meeting I attended. I'm visually impaired, and these screenshots are my only " +
-      "record of what was shown on screen. Please describe each distinct slide or screen in order, " +
-      "including all visible text, bullet points, chart descriptions, names, dates, and action items. " +
-      "End with a summary of the key takeaways and any action items with their owners.";
+  function buildPrompt(n) {
+    const pages = n === 1 ? "1 page" : n + " pages";
+    return "I'm attaching a PDF with " + pages + ", one screenshot per page, from a meeting I attended. " +
+      "I'm visually impaired, and these screenshots are my only record of what was shown on screen. " +
+      "Please describe each page in order, including all visible text, bullet points, chart descriptions, " +
+      "names, dates, and action items. End with a summary of the key takeaways and any action items with their owners.";
   }
 
   async function copyText(text) {
@@ -225,18 +310,22 @@
     stream.getTracks().forEach((t) => t.stop()); stream = null;
     stopKeepAlive();
     startBtn.disabled = false; stopBtn.disabled = true;
-    const secs = Math.round(intervalMs() / 1000);
-    const prompt = buildPrompt(count, secs);
+    if (count === 0) {
+      focusControl(startBtn);
+      announce("No screenshots were taken, so there is nothing to summarise. The Start button is selected. Press Enter to try again.");
+      return;
+    }
+    const prompt = buildPrompt(count);
     promptBox.value = prompt;
     copilotLink.href = copilotUrl;            // enterprise-configured address
     handoffCard.style.display = "block";
     await copyText(prompt);
-    shots.forEach((s, i) => setTimeout(() => downloadBlob(s.blob, s.name), i * 250));
-    // Do NOT auto-open (that gets popup-blocked and is jarring). Focus a real link she opens.
+    // One PDF, one page per screenshot — a single file to attach, past Copilot's 3-image limit.
+    downloadBlob(new Blob([buildPdf(shots)], { type: "application/pdf" }), "MeetingCaptures.pdf");
     focusControl(copilotLink);
-    announce("Stopping. " + count + " screenshots taken and downloading. Your prompt is copied to the " +
-      "clipboard. The Open Copilot button is now selected — press Enter to open Copilot in a new tab, then " +
-      "paste the prompt and attach the screenshots from your Downloads folder.");
+    announce("Stopping. " + count + " screenshots saved as one file called Meeting Captures dot P D F in your " +
+      "Downloads folder. Your prompt is copied to the clipboard. The Open Copilot button is now selected — " +
+      "press Enter to open Copilot, paste the prompt, and attach that one PDF file.");
   }
 
   function speakStatus() {
@@ -287,6 +376,7 @@
   startBtn.addEventListener("click", start);
   stopBtn.addEventListener("click", stop);
   saveBtn.addEventListener("click", saveNotes);
+  smartMode.addEventListener("change", () => { intervalInput.disabled = smartMode.checked; });
   applyBtn.addEventListener("click", applyUrl);
   saveCopyBtn.addEventListener("click", saveCopy);
 

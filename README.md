@@ -27,13 +27,19 @@ installed, or blocked, and it works with the screen reader you already use:
 **→ https://mikejsmith1985.github.io/MeetingLens/**
 
 Open it in Microsoft Edge or Chrome, press **Start capture**, and choose **Entire Screen**.
-It screenshots your screen on an interval (speaking each one aloud) while you sit in your
-meeting; when you press **Stop**, it downloads the screenshots, copies the Copilot prompt to
-your clipboard, and opens Copilot for you.
+It screenshots your screen **automatically whenever the slide changes** (a fixed-timer mode is
+also available) while you sit in your meeting; when you press **Stop**, it saves everything as a
+**single PDF** (one screenshot per page — which sidesteps Copilot's 3-image limit), copies the
+Copilot prompt to your clipboard, and opens Copilot for you to paste and attach that one file.
 
-Trade-off vs. the app: the Start/Stop buttons only respond when the MeetingLens tab is focused
-(there are no system-wide hotkeys in a browser), and you grant screen-sharing once per meeting.
-Capture itself runs on its own in the background once started.
+Accessibility notes:
+- Announcements are read by **your own screen reader** (an ARIA live region), so the app never
+  talks over it. A "speak aloud" toggle is available for people who don't use a screen reader.
+- Focus is managed for you — the right button is always selected; just press **Enter**.
+
+Trade-offs vs. the app: the Start/Stop buttons only respond when the MeetingLens tab is focused
+(no system-wide hotkeys in a browser), and you grant screen-sharing once per meeting. Capture
+runs on its own in the background once started.
 
 ## No-exe edition (locked-down PCs): `meetinglens.ps1`
 
